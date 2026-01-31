@@ -1,13 +1,15 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataTable } from '@/components/ui/data-table';
-import { useAuditLogs } from '@/context/AppContext';
-import { AuditLog } from '@/types';
-import { History, TrendingUp, FileText, Package, Users } from 'lucide-react';
+import { useAuditLogs } from '@/hooks/useAuditLogs';
+import { Tables } from '@/integrations/supabase/types';
+import { History, FileText, Package, Users, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const entityIcons = {
+type AuditLog = Tables<'audit_logs'>;
+
+const entityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   contract: FileText,
   product: Package,
   client: Users,
@@ -33,7 +35,7 @@ const actionColors: Record<string, string> = {
 };
 
 export default function AuditPage() {
-  const { auditLogs } = useAuditLogs();
+  const { auditLogs, loading } = useAuditLogs();
 
   const columns = [
     {
@@ -82,6 +84,16 @@ export default function AuditPage() {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

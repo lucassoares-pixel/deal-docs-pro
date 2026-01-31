@@ -7,13 +7,15 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useProducts } from '@/context/AppContext';
-import { Product } from '@/types';
-import { Package, Plus, Search, DollarSign, Percent, Calendar } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
+import { Tables } from '@/integrations/supabase/types';
+import { Package, Plus, Search, DollarSign, Percent, Calendar, Loader2 } from 'lucide-react';
+
+type Product = Tables<'products'>;
 
 export default function ProductsPage() {
   const navigate = useNavigate();
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
   const [search, setSearch] = useState('');
 
   const filteredProducts = products.filter(product => 
@@ -59,7 +61,7 @@ export default function ProductsPage() {
       render: (product: Product) => (
         <div className="flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-muted-foreground" />
-          <span className="font-medium text-foreground">{formatCurrency(product.base_price)}</span>
+          <span className="font-medium text-foreground">{formatCurrency(Number(product.base_price))}</span>
           {product.billing_type === 'recurring' && (
             <span className="text-sm text-muted-foreground">/mês</span>
           )}
@@ -98,6 +100,16 @@ export default function ProductsPage() {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (products.length === 0) {
     return (

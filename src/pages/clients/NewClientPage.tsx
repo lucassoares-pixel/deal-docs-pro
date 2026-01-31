@@ -5,15 +5,14 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useClients, useApp } from '@/context/AppContext';
-import { Client, LegalRepresentative } from '@/types';
-import { ArrowLeft, Save, Building2, User } from 'lucide-react';
+import { useClients } from '@/hooks/useClients';
+import { ArrowLeft, Save, Building2, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function NewClientPage() {
   const navigate = useNavigate();
-  const { addClient } = useClients();
-  const { dispatch } = useApp();
+  const { addClient, addLegalRepresentative } = useClients();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     company_name: '',
@@ -57,7 +56,7 @@ export default function NewClientPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -65,41 +64,41 @@ export default function NewClientPage() {
       return;
     }
 
-    const clientId = `client-${Date.now()}`;
-    const now = new Date().toISOString();
+    setIsSubmitting(true);
 
-    const newClient: Client = {
-      id: clientId,
-      company_name: formData.company_name,
-      trade_name: formData.trade_name,
-      cnpj: formData.cnpj,
-      email: formData.email,
-      phone: formData.phone,
-      address_street: formData.address_street,
-      address_number: formData.address_number,
-      address_neighborhood: formData.address_neighborhood,
-      address_city: formData.address_city,
-      address_state: formData.address_state,
-      address_zip: formData.address_zip,
-      created_at: now,
-      updated_at: now,
-    };
+    try {
+      const clientData = await addClient({
+        company_name: formData.company_name,
+        trade_name: formData.trade_name,
+        cnpj: formData.cnpj,
+        email: formData.email,
+        phone: formData.phone,
+        address_street: formData.address_street,
+        address_number: formData.address_number,
+        address_neighborhood: formData.address_neighborhood,
+        address_city: formData.address_city,
+        address_state: formData.address_state,
+        address_zip: formData.address_zip,
+      });
 
-    const newLegalRep: LegalRepresentative = {
-      id: `legal-${Date.now()}`,
-      client_id: clientId,
-      legal_name: formData.legal_name,
-      cpf: formData.legal_cpf,
-      role: formData.legal_role,
-      email: formData.legal_email,
-      phone: formData.legal_phone,
-    };
+      if (clientData) {
+        await addLegalRepresentative({
+          client_id: clientData.id,
+          legal_name: formData.legal_name,
+          cpf: formData.legal_cpf,
+          role: formData.legal_role,
+          email: formData.legal_email,
+          phone: formData.legal_phone,
+        });
 
-    addClient(newClient);
-    dispatch({ type: 'ADD_LEGAL_REP', payload: newLegalRep });
-
-    toast.success('Cliente cadastrado com sucesso!');
-    navigate('/clients');
+        toast.success('Cliente cadastrado com sucesso!');
+        navigate('/clients');
+      }
+    } catch (error) {
+      toast.error('Erro ao cadastrar cliente');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,9 +331,18 @@ export default function NewClientPage() {
           <Button type="button" variant="outline" onClick={() => navigate('/clients')}>
             Cancelar
           </Button>
-          <Button type="submit" className="btn-secondary">
-            <Save className="w-4 h-4" />
-            Salvar Cliente
+          <Button type="submit" className="btn-secondary" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Salvar Cliente
+              </>
+            )}
           </Button>
         </div>
       </form>

@@ -8,14 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useProducts } from '@/context/AppContext';
-import { Product, BillingType } from '@/types';
-import { ArrowLeft, Save, Package } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
+import { ArrowLeft, Save, Package, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+type BillingType = 'recurring' | 'one_time';
 
 export default function NewProductPage() {
   const navigate = useNavigate();
   const { addProduct } = useProducts();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -50,7 +52,7 @@ export default function NewProductPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -58,27 +60,30 @@ export default function NewProductPage() {
       return;
     }
 
-    const now = new Date().toISOString();
+    setIsSubmitting(true);
 
-    const newProduct: Product = {
-      id: `prod-${Date.now()}`,
-      name: formData.name,
-      description: formData.description,
-      billing_type: formData.billing_type,
-      recurring_period: formData.billing_type === 'recurring' ? 'monthly' : null,
-      base_price: parseFloat(formData.base_price),
-      setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
-      allow_discount: formData.allow_discount,
-      max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
-      fidelity_months: parseInt(formData.fidelity_months) || 0,
-      active: formData.active,
-      created_at: now,
-      updated_at: now,
-    };
+    try {
+      const result = await addProduct({
+        name: formData.name,
+        description: formData.description,
+        billing_type: formData.billing_type,
+        recurring_period: formData.billing_type === 'recurring' ? 'monthly' : null,
+        base_price: parseFloat(formData.base_price),
+        setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
+        allow_discount: formData.allow_discount,
+        max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
+        fidelity_months: parseInt(formData.fidelity_months) || 0,
+        active: formData.active,
+      });
 
-    addProduct(newProduct);
-    toast.success('Produto cadastrado com sucesso!');
-    navigate('/products');
+      if (result) {
+        navigate('/products');
+      }
+    } catch (error) {
+      toast.error('Erro ao cadastrar produto');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -255,9 +260,18 @@ export default function NewProductPage() {
           <Button type="button" variant="outline" onClick={() => navigate('/products')}>
             Cancelar
           </Button>
-          <Button type="submit" className="btn-secondary">
-            <Save className="w-4 h-4" />
-            Salvar Produto
+          <Button type="submit" className="btn-secondary" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Salvar Produto
+              </>
+            )}
           </Button>
         </div>
       </form>
