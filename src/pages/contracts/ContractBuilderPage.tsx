@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useClients, useProducts, useContracts, useCurrentUser } from '@/context/AppContext';
-import { Product, ContractProduct, DiscountLog, Contract, Client, LegalRepresentative } from '@/types';
+import { useClients } from '@/hooks/useClients';
+import { useProducts } from '@/hooks/useProducts';
+import { useContracts } from '@/hooks/useContracts';
+import { useAuth } from '@/context/AuthContext';
+import { Tables } from '@/integrations/supabase/types';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -15,17 +18,20 @@ import {
   Package, 
   Users, 
   FileText, 
-  AlertCircle,
   Plus,
   Minus,
   Percent,
   DollarSign,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateContractPDF, generateClientSheetPDF } from '@/utils/pdfGenerator';
 
 type Step = 'client' | 'products' | 'review';
+type Product = Tables<'products'>;
+type Client = Tables<'clients'>;
+type LegalRep = Tables<'legal_representatives'>;
 
 interface SelectedProduct {
   product: Product;
@@ -35,19 +41,20 @@ interface SelectedProduct {
 
 export default function ContractBuilderPage() {
   const navigate = useNavigate();
-  const { clients, getLegalRepByClientId } = useClients();
-  const { activeProducts } = useProducts();
+  const { clients, legalRepresentatives, loading: loadingClients } = useClients();
+  const { activeProducts, loading: loadingProducts } = useProducts();
   const { addContract } = useContracts();
-  const currentUser = useCurrentUser();
+  const { profile } = useAuth();
 
   const [step, setStep] = useState<Step>('client');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [billingDay, setBillingDay] = useState('5');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
-  const legalRep = selectedClientId ? getLegalRepByClientId(selectedClientId) : undefined;
+  const legalRep = legalRepresentatives.find(lr => lr.client_id === selectedClientId);
 
   // Separate products by type
   const recurringProducts = activeProducts.filter(p => p.billing_type === 'recurring');
@@ -61,16 +68,16 @@ export default function ContractBuilderPage() {
 
     selectedProducts.forEach(({ product, quantity, discountPercentage }) => {
       if (product.billing_type === 'recurring') {
-        const full = product.base_price * quantity;
+        const full = Number(product.base_price) * quantity;
         const discounted = full * (1 - discountPercentage / 100);
         recurringFull += full;
         recurringDiscounted += discounted;
         
         if (product.setup_price) {
-          setupTotal += product.setup_price * quantity;
+          setupTotal += Number(product.setup_price) * quantity;
         }
       } else {
-        const full = product.base_price * quantity;
+        const full = Number(product.base_price) * quantity;
         const discounted = full * (1 - discountPercentage / 100);
         setupTotal += discounted;
       }
@@ -173,61 +180,87 @@ export default function ContractBuilderPage() {
     else if (step === 'review') setStep('products');
   };
 
-  const handleCreateContract = () => {
+  const handleCreateContract = async () => {
     if (!selectedClient || !legalRep) {
       toast.error('Dados do cliente incompletos');
       return;
     }
 
-    const now = new Date().toISOString();
+    setIsSubmitting(true);
 
-    const contractProducts: ContractProduct[] = selectedProducts.map(({ product, quantity, discountPercentage }) => ({
-      product_id: product.id,
-      product,
-      quantity,
-      discount_percentage: discountPercentage,
-      full_price: product.base_price * quantity,
-      discounted_price: product.base_price * quantity * (1 - discountPercentage / 100),
-    }));
-
-    const discountLogs: DiscountLog[] = selectedProducts
-      .filter(p => p.discountPercentage > 0)
-      .map(({ product, quantity, discountPercentage }) => ({
+    try {
+      const contractProducts = selectedProducts.map(({ product, quantity, discountPercentage }) => ({
         product_id: product.id,
-        product_name: product.name,
-        original_price: product.base_price * quantity,
+        quantity,
         discount_percentage: discountPercentage,
-        discounted_price: product.base_price * quantity * (1 - discountPercentage / 100),
-        applied_at: now,
-        applied_by: currentUser.name,
+        full_price: Number(product.base_price) * quantity,
+        discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
       }));
 
-    const newContract: Contract = {
-      id: `contract-${Date.now()}`,
-      client_id: selectedClient.id,
-      client: selectedClient,
-      legal_representative: legalRep,
-      products: contractProducts,
-      recurring_total_full: calculations.recurringFull,
-      recurring_total_discounted: calculations.recurringDiscounted,
-      setup_total: calculations.setupTotal,
-      discount_applied_log: discountLogs,
-      start_date: startDate,
-      billing_day: parseInt(billingDay),
-      fidelity_months: calculations.maxFidelity,
-      status: 'active',
-      created_at: now,
-      updated_at: now,
-    };
+      const discountLogs = selectedProducts
+        .filter(p => p.discountPercentage > 0)
+        .map(({ product, quantity, discountPercentage }) => ({
+          product_id: product.id,
+          product_name: product.name,
+          original_price: Number(product.base_price) * quantity,
+          discount_percentage: discountPercentage,
+          discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
+          applied_by: profile?.name || 'Unknown',
+        }));
 
-    addContract(newContract);
-    
-    // Generate PDFs
-    generateContractPDF(newContract);
-    generateClientSheetPDF(newContract);
+      const result = await addContract(
+        {
+          client_id: selectedClient.id,
+          legal_representative_id: legalRep.id,
+          recurring_total_full: calculations.recurringFull,
+          recurring_total_discounted: calculations.recurringDiscounted,
+          setup_total: calculations.setupTotal,
+          start_date: startDate,
+          billing_day: parseInt(billingDay),
+          fidelity_months: calculations.maxFidelity,
+          status: 'active',
+        },
+        contractProducts,
+        discountLogs
+      );
 
-    toast.success('Contrato criado com sucesso! PDFs gerados.');
-    navigate('/contracts');
+      if (result) {
+        // Generate PDFs with mock data format for compatibility
+        const pdfContract = {
+          id: result.id,
+          client_id: selectedClient.id,
+          client: selectedClient as any,
+          legal_representative: legalRep as any,
+          products: selectedProducts.map(({ product, quantity, discountPercentage }) => ({
+            product_id: product.id,
+            product: product as any,
+            quantity,
+            discount_percentage: discountPercentage,
+            full_price: Number(product.base_price) * quantity,
+            discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
+          })),
+          recurring_total_full: calculations.recurringFull,
+          recurring_total_discounted: calculations.recurringDiscounted,
+          setup_total: calculations.setupTotal,
+          discount_applied_log: discountLogs.map(l => ({ ...l, applied_at: new Date().toISOString() })),
+          start_date: startDate,
+          billing_day: parseInt(billingDay),
+          fidelity_months: calculations.maxFidelity,
+          status: 'active' as const,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        generateContractPDF(pdfContract);
+        generateClientSheetPDF(pdfContract);
+
+        navigate('/contracts');
+      }
+    } catch (error) {
+      toast.error('Erro ao criar contrato');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const steps = [
@@ -235,6 +268,16 @@ export default function ContractBuilderPage() {
     { id: 'products', label: 'Produtos', icon: Package },
     { id: 'review', label: 'Revisão', icon: FileText },
   ];
+
+  if (loadingClients || loadingProducts) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -371,7 +414,7 @@ export default function ContractBuilderPage() {
                             <p className="text-sm text-muted-foreground">{product.description}</p>
                             <div className="flex items-center gap-4 mt-2">
                               <span className="text-sm font-medium text-accent">
-                                {formatCurrency(product.base_price)}/mês
+                                {formatCurrency(Number(product.base_price))}/mês
                               </span>
                               {product.allow_discount && (
                                 <span className="text-xs text-muted-foreground">
@@ -426,7 +469,7 @@ export default function ContractBuilderPage() {
                             <p className="text-sm text-muted-foreground">{product.description}</p>
                             <div className="flex items-center gap-4 mt-2">
                               <span className="text-sm font-medium text-warning">
-                                {formatCurrency(product.base_price)}
+                                {formatCurrency(Number(product.base_price))}
                               </span>
                               {product.allow_discount && (
                                 <span className="text-xs text-muted-foreground">
@@ -465,7 +508,7 @@ export default function ContractBuilderPage() {
                 <h2 className="section-title">Produtos Selecionados</h2>
                 <div className="space-y-4">
                   {selectedProducts.map(({ product, quantity, discountPercentage }) => {
-                    const fullPrice = product.base_price * quantity;
+                    const fullPrice = Number(product.base_price) * quantity;
                     const discountedPrice = fullPrice * (1 - discountPercentage / 100);
                     
                     return (
@@ -665,7 +708,7 @@ export default function ContractBuilderPage() {
                       {selectedProducts
                         .filter(p => p.product.billing_type === 'recurring')
                         .map(({ product, quantity, discountPercentage }) => {
-                          const fullPrice = product.base_price * quantity;
+                          const fullPrice = Number(product.base_price) * quantity;
                           const discountedPrice = fullPrice * (1 - discountPercentage / 100);
                           return (
                             <tr key={product.id} className="table-row">
@@ -723,13 +766,13 @@ export default function ContractBuilderPage() {
                           <tr key={`setup-${product.id}`} className="table-row">
                             <td className="px-6 py-4">Setup - {product.name}</td>
                             <td className="px-6 py-4 text-center">{quantity}</td>
-                            <td className="px-6 py-4 text-right">{formatCurrency((product.setup_price || 0) * quantity)}</td>
+                            <td className="px-6 py-4 text-right">{formatCurrency((Number(product.setup_price) || 0) * quantity)}</td>
                           </tr>
                         ))}
                       {selectedProducts
                         .filter(p => p.product.billing_type === 'one_time')
                         .map(({ product, quantity, discountPercentage }) => {
-                          const discountedPrice = product.base_price * quantity * (1 - discountPercentage / 100);
+                          const discountedPrice = Number(product.base_price) * quantity * (1 - discountPercentage / 100);
                           return (
                             <tr key={product.id} className="table-row">
                               <td className="px-6 py-4 font-medium">
@@ -794,9 +837,18 @@ export default function ContractBuilderPage() {
           </Button>
           
           {step === 'review' ? (
-            <Button onClick={handleCreateContract} className="btn-secondary">
-              <FileText className="w-4 h-4" />
-              Gerar Contrato e PDFs
+            <Button onClick={handleCreateContract} className="btn-secondary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Gerando...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  Gerar Contrato e PDFs
+                </>
+              )}
             </Button>
           ) : (
             <Button onClick={handleNextStep} className="btn-secondary">

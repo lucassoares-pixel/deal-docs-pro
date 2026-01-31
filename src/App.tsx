@@ -3,7 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AppProvider } from "@/context/AppContext";
+import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import ClientsPage from "./pages/clients/ClientsPage";
 import NewClientPage from "./pages/clients/NewClientPage";
@@ -12,31 +13,33 @@ import NewProductPage from "./pages/products/NewProductPage";
 import ContractsPage from "./pages/contracts/ContractsPage";
 import ContractBuilderPage from "./pages/contracts/ContractBuilderPage";
 import AuditPage from "./pages/audit/AuditPage";
+import AuthPage from "./pages/auth/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AppProvider>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/clients" element={<ClientsPage />} />
-            <Route path="/clients/new" element={<NewClientPage />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/products/new" element={<NewProductPage />} />
-            <Route path="/contracts" element={<ContractsPage />} />
-            <Route path="/contracts/new" element={<ContractBuilderPage />} />
-            <Route path="/audit" element={<AuditPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
+            <Route path="/clients/new" element={<ProtectedRoute><NewClientPage /></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+            <Route path="/products/new" element={<ProtectedRoute><NewProductPage /></ProtectedRoute>} />
+            <Route path="/contracts" element={<ProtectedRoute><ContractsPage /></ProtectedRoute>} />
+            <Route path="/contracts/new" element={<ProtectedRoute><ContractBuilderPage /></ProtectedRoute>} />
+            <Route path="/audit" element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AppProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

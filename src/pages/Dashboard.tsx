@@ -4,7 +4,10 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { useClients, useProducts, useContracts, useAuditLogs } from '@/context/AppContext';
+import { useClients } from '@/hooks/useClients';
+import { useProducts } from '@/hooks/useProducts';
+import { useContracts } from '@/hooks/useContracts';
+import { useAuditLogs } from '@/hooks/useAuditLogs';
 import { 
   Users, 
   Package, 
@@ -13,21 +16,24 @@ import {
   Plus,
   ArrowRight,
   TrendingUp,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { clients } = useClients();
-  const { products, activeProducts } = useProducts();
-  const { contracts } = useContracts();
-  const { auditLogs } = useAuditLogs();
+  const { clients, loading: loadingClients } = useClients();
+  const { products, activeProducts, loading: loadingProducts } = useProducts();
+  const { contracts, loading: loadingContracts } = useContracts();
+  const { auditLogs, loading: loadingAudit } = useAuditLogs();
+
+  const loading = loadingClients || loadingProducts || loadingContracts || loadingAudit;
 
   // Calculate stats
   const activeContracts = contracts.filter(c => c.status === 'active');
-  const totalRecurringRevenue = activeContracts.reduce((acc, c) => acc + c.recurring_total_discounted, 0);
+  const totalRecurringRevenue = activeContracts.reduce((acc, c) => acc + Number(c.recurring_total_discounted), 0);
   
   const recentContracts = contracts.slice(0, 5);
   const recentLogs = auditLogs.slice(0, 5);
@@ -38,6 +44,16 @@ export default function Dashboard() {
       currency: 'BRL'
     }).format(value);
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -58,7 +74,6 @@ export default function Dashboard() {
           title="Clientes Ativos"
           value={clients.length}
           icon={Users}
-          trend={{ value: 12, isPositive: true }}
         />
         <StatCard
           title="Produtos Ativos"
@@ -77,7 +92,6 @@ export default function Dashboard() {
           value={formatCurrency(totalRecurringRevenue)}
           subtitle="mensal"
           icon={DollarSign}
-          trend={{ value: 8, isPositive: true }}
         />
       </div>
 
@@ -121,12 +135,12 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-foreground">{contract.client.trade_name}</p>
+                      <p className="font-medium text-foreground">{contract.client?.trade_name || 'Cliente'}</p>
                       <p className="text-sm text-muted-foreground">
-                        {contract.products.length} produto(s) • {formatCurrency(contract.recurring_total_discounted)}/mês
+                        {contract.products?.length || 0} produto(s) • {formatCurrency(Number(contract.recurring_total_discounted))}/mês
                       </p>
                     </div>
-                    <StatusBadge status={contract.status} />
+                    <StatusBadge status={contract.status as any} />
                   </div>
                 </div>
               ))

@@ -6,13 +6,15 @@ import { DataTable } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useClients } from '@/context/AppContext';
-import { Client } from '@/types';
-import { Users, Plus, Search, Building2, Mail, Phone } from 'lucide-react';
+import { useClients } from '@/hooks/useClients';
+import { Tables } from '@/integrations/supabase/types';
+import { Users, Plus, Search, Building2, Mail, Phone, Loader2 } from 'lucide-react';
+
+type Client = Tables<'clients'>;
 
 export default function ClientsPage() {
   const navigate = useNavigate();
-  const { clients } = useClients();
+  const { clients, loading } = useClients();
   const [search, setSearch] = useState('');
 
   const filteredClients = clients.filter(client => 
@@ -70,6 +72,16 @@ export default function ClientsPage() {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (clients.length === 0) {
     return (

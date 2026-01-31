@@ -7,10 +7,12 @@ import {
   Plus,
   History,
   Settings,
-  FileSignature
+  FileSignature,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useCurrentUser } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -22,13 +24,12 @@ const navigation = [
 
 const adminNavigation = [
   { name: 'Histórico', href: '/audit', icon: History },
-  { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const location = useLocation();
-  const currentUser = useCurrentUser();
-  const isAdmin = currentUser.role === 'admin';
+  const { profile, signOut } = useAuth();
+  const isAdmin = profile?.role === 'admin';
 
   return (
     <aside className="w-64 bg-sidebar flex flex-col border-r border-sidebar-border">
@@ -102,17 +103,25 @@ export function Sidebar() {
         <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-sidebar-accent">
           <div className="w-9 h-9 rounded-full bg-sidebar-primary flex items-center justify-center">
             <span className="text-sm font-medium text-sidebar-primary-foreground">
-              {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              {profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">
-              {currentUser.name}
+              {profile?.name || 'Usuário'}
             </p>
             <p className="text-xs text-sidebar-foreground/60 capitalize">
-              {currentUser.role === 'admin' ? 'Administrador' : 'Vendedor'}
+              {profile?.role === 'admin' ? 'Administrador' : 'Vendedor'}
             </p>
           </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={signOut}
+            className="text-sidebar-foreground/60 hover:text-sidebar-foreground"
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </aside>
