@@ -111,7 +111,11 @@ export type Database = {
         Row: {
           contract_id: string
           created_at: string
+          custom_enrollment_price: number | null
+          discount_end_date: string | null
+          discount_months: number | null
           discount_percentage: number
+          discount_period_type: string | null
           discounted_price: number
           full_price: number
           id: string
@@ -121,7 +125,11 @@ export type Database = {
         Insert: {
           contract_id: string
           created_at?: string
+          custom_enrollment_price?: number | null
+          discount_end_date?: string | null
+          discount_months?: number | null
           discount_percentage?: number
+          discount_period_type?: string | null
           discounted_price: number
           full_price: number
           id?: string
@@ -131,7 +139,11 @@ export type Database = {
         Update: {
           contract_id?: string
           created_at?: string
+          custom_enrollment_price?: number | null
+          discount_end_date?: string | null
+          discount_months?: number | null
           discount_percentage?: number
+          discount_period_type?: string | null
           discounted_price?: number
           full_price?: number
           id?: string
@@ -160,6 +172,10 @@ export type Database = {
           billing_day: number
           client_id: string
           created_at: string
+          extra_discount_end_date: string | null
+          extra_discount_months: number | null
+          extra_discount_period_type: string | null
+          extra_discount_value: number | null
           fidelity_months: number
           id: string
           legal_representative_id: string | null
@@ -175,6 +191,10 @@ export type Database = {
           billing_day?: number
           client_id: string
           created_at?: string
+          extra_discount_end_date?: string | null
+          extra_discount_months?: number | null
+          extra_discount_period_type?: string | null
+          extra_discount_value?: number | null
           fidelity_months?: number
           id?: string
           legal_representative_id?: string | null
@@ -190,6 +210,10 @@ export type Database = {
           billing_day?: number
           client_id?: string
           created_at?: string
+          extra_discount_end_date?: string | null
+          extra_discount_months?: number | null
+          extra_discount_period_type?: string | null
+          extra_discount_value?: number | null
           fidelity_months?: number
           id?: string
           legal_representative_id?: string | null
@@ -269,6 +293,47 @@ export type Database = {
           },
         ]
       }
+      extra_discount_logs: {
+        Row: {
+          applied_at: string
+          applied_by: string
+          contract_id: string
+          discount_end_date: string | null
+          discount_months: number | null
+          discount_period_type: string
+          discount_value: number
+          id: string
+        }
+        Insert: {
+          applied_at?: string
+          applied_by: string
+          contract_id: string
+          discount_end_date?: string | null
+          discount_months?: number | null
+          discount_period_type?: string
+          discount_value: number
+          id?: string
+        }
+        Update: {
+          applied_at?: string
+          applied_by?: string
+          contract_id?: string
+          discount_end_date?: string | null
+          discount_months?: number | null
+          discount_period_type?: string
+          discount_value?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_discount_logs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_representatives: {
         Row: {
           client_id: string
@@ -323,6 +388,7 @@ export type Database = {
           discount_start_date: string | null
           fidelity_months: number
           id: string
+          implementation_price: number | null
           max_discount_percentage: number
           name: string
           recurring_period: string | null
@@ -342,6 +408,7 @@ export type Database = {
           discount_start_date?: string | null
           fidelity_months?: number
           id?: string
+          implementation_price?: number | null
           max_discount_percentage?: number
           name: string
           recurring_period?: string | null
@@ -361,6 +428,7 @@ export type Database = {
           discount_start_date?: string | null
           fidelity_months?: number
           id?: string
+          implementation_price?: number | null
           max_discount_percentage?: number
           name?: string
           recurring_period?: string | null

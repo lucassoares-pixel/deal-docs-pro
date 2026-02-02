@@ -26,9 +26,6 @@ export default function NewProductPage() {
         setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
         allow_discount: formData.allow_discount,
         max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
-        discount_period_type: formData.discount_period_type,
-        discount_start_date: formData.discount_period_type === 'fixed_period' ? formData.discount_start_date : null,
-        discount_end_date: formData.discount_period_type === 'fixed_period' ? formData.discount_end_date : null,
         fidelity_months: parseInt(formData.fidelity_months) || 0,
         active: formData.active,
       });
