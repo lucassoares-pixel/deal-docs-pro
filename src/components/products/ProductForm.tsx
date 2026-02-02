@@ -160,7 +160,7 @@ export function ProductForm({
 
           {formData.billing_type === 'recurring' && (
             <div>
-              <Label className="form-label">Taxa de Adesão (R$)</Label>
+              <Label className="form-label">Valor de Implantação (R$)</Label>
               <Input
                 type="number"
                 step="0.01"
