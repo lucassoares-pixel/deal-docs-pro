@@ -10,6 +10,7 @@ import ClientsPage from "./pages/clients/ClientsPage";
 import NewClientPage from "./pages/clients/NewClientPage";
 import ProductsPage from "./pages/products/ProductsPage";
 import NewProductPage from "./pages/products/NewProductPage";
+import EditProductPage from "./pages/products/EditProductPage";
 import ContractsPage from "./pages/contracts/ContractsPage";
 import ContractBuilderPage from "./pages/contracts/ContractBuilderPage";
 import AuditPage from "./pages/audit/AuditPage";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/clients/new" element={<ProtectedRoute><NewClientPage /></ProtectedRoute>} />
             <Route path="/products" element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
             <Route path="/products/new" element={<ProtectedRoute><NewProductPage /></ProtectedRoute>} />
+            <Route path="/products/:id" element={<ProtectedRoute><EditProductPage /></ProtectedRoute>} />
             <Route path="/contracts" element={<ProtectedRoute><ContractsPage /></ProtectedRoute>} />
             <Route path="/contracts/new" element={<ProtectedRoute><ContractBuilderPage /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
