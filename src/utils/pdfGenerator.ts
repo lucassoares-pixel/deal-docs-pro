@@ -21,8 +21,50 @@ interface PdfOptions {
   mode?: PdfOutputMode;
 }
 
-function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
+async function trySaveWithNativeFilePicker(doc: jsPDF, filename: string): Promise<boolean> {
+  const picker = (window as any)?.showSaveFilePicker;
+  if (typeof picker !== 'function') return false;
+
+  try {
+    const handle = await picker({
+      suggestedName: filename,
+      types: [
+        {
+          description: 'PDF',
+          accept: { 'application/pdf': ['.pdf'] },
+        },
+      ],
+    });
+
+    const writable = await handle.createWritable();
+    const data = (doc as any).output('arraybuffer') as ArrayBuffer;
+    await writable.write(data);
+    await writable.close();
+    return true;
+  } catch (e: any) {
+    // Usuário cancelou o diálogo: consideramos "resolvido" para não disparar outros fallbacks.
+    if (e?.name === 'AbortError') return true;
+    return false;
+  }
+}
+
+async function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
   if (mode === 'download') {
+    // Método mais confiável quando extensões bloqueiam `blob:` (ERR_BLOCKED_BY_CLIENT):
+    // usa o File System Access API para salvar diretamente no disco.
+    const saved = await trySaveWithNativeFilePicker(doc, filename);
+    if (saved) return;
+
+    // Fallback: abre o PDF na MESMA aba (sem popup e sem `blob:`). O usuário salva pelo browser.
+    try {
+      const dataUri = (doc as any).output('datauristring') as string;
+      window.location.assign(dataUri);
+      return;
+    } catch {
+      // continua para último fallback
+    }
+
+    // Último fallback
     doc.save(filename);
     return;
   }
@@ -69,7 +111,7 @@ function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
   doc.save(filename);
 }
 
-export function generateContractPDF(contract: Contract, options: PdfOptions = {}) {
+export async function generateContractPDF(contract: Contract, options: PdfOptions = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   let yPos = 20;
@@ -306,10 +348,10 @@ export function generateContractPDF(contract: Contract, options: PdfOptions = {}
 
   // Save/Open
   const filename = `contrato_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-  finalizePdf(doc, filename, options.mode ?? 'download');
+  await finalizePdf(doc, filename, options.mode ?? 'download');
 }
 
-export function generateClientSheetPDF(contract: Contract, options: PdfOptions = {}) {
+export async function generateClientSheetPDF(contract: Contract, options: PdfOptions = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   let yPos = 20;
@@ -415,5 +457,5 @@ export function generateClientSheetPDF(contract: Contract, options: PdfOptions =
 
   // Save/Open
   const filename = `ficha_cliente_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-  finalizePdf(doc, filename, options.mode ?? 'download');
+  await finalizePdf(doc, filename, options.mode ?? 'download');
 }
