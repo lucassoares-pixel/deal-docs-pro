@@ -27,30 +27,46 @@ function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
     return;
   }
 
-  // Em alguns ambientes (ex: preview em iframe), downloads automáticos são bloqueados.
-  // Abrir em nova aba costuma funcionar melhor e ainda permite salvar/baixar pelo navegador.
+  // Em alguns ambientes (ex: preview em iframe), downloads automáticos/Blob URLs são bloqueados.
+  // O erro do usuário (ERR_BLOCKED_BY_CLIENT) indica bloqueio do tipo `blob:`.
+  // Portanto, priorizamos abrir via *data URL* (não-blob), que tende a funcionar mesmo com bloqueadores.
+  try {
+    // jsPDF já tem um helper que abre em nova aba usando data URL
+    // (isso evita blob: e costuma não ser bloqueado por extensões)
+    (doc as any).output('dataurlnewwindow');
+    return;
+  } catch {
+    // continua para os fallbacks abaixo
+  }
+
+  // Fallback 1: data URI manual
+  try {
+    const dataUri = (doc as any).output('datauristring') as string;
+    const opened = window.open(dataUri, '_blank', 'noopener,noreferrer');
+    if (opened) return;
+  } catch {
+    // ignore
+  }
+
+  // Fallback 2: blob (pode ser bloqueado) + link download
   try {
     const blob = (doc as any).output('blob') as Blob;
     const url = URL.createObjectURL(blob);
-    const opened = window.open(url, '_blank', 'noopener,noreferrer');
-
-    if (!opened) {
-      // fallback: tenta forçar download via link
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    // libera memória depois de um tempo
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return;
   } catch {
-    // último fallback
-    doc.save(filename);
+    // ignore
   }
+
+  // Último fallback
+  doc.save(filename);
 }
 
 export function generateContractPDF(contract: Contract, options: PdfOptions = {}) {
