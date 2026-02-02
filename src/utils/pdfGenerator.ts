@@ -69,21 +69,30 @@ export function generateContractPDF(contract: Contract) {
 
     autoTable(doc, {
       startY: yPos,
-      head: [['Produto', 'Qtd', 'Preço Cheio', 'Desc.', 'Preço Final', 'Fidelidade']],
+      head: [['PRODUTO', 'QTD', 'IMPLANTAÇÃO', 'VALOR CHEIO', 'DESCONTO', 'VALOR C/ DESC', 'FIDELIDADE']],
       body: recurringProducts.map(p => [
         p.product.name,
         p.quantity.toString(),
+        formatCurrency((p.product.setup_price || 0) * p.quantity),
         formatCurrency(p.full_price),
         p.discount_percentage > 0 ? `${p.discount_percentage}%` : '-',
         formatCurrency(p.discounted_price),
-        `${p.product.fidelity_months} meses`
+        `[${p.product.fidelity_months} Meses]`
       ]),
-      foot: [['', '', 'Total Mensal (cheio):', '', formatCurrency(contract.recurring_total_full), ''],
-             ['', '', 'Total Mensal (c/ desc):', '', formatCurrency(contract.recurring_total_discounted), '']],
+      foot: [[
+        'TOTAL', 
+        '', 
+        formatCurrency(contract.setup_total), 
+        formatCurrency(contract.recurring_total_full), 
+        '', 
+        formatCurrency(contract.recurring_total_discounted), 
+        `[${contract.fidelity_months} Meses]`
+      ]],
       theme: 'striped',
       headStyles: { fillColor: [34, 52, 79], textColor: 255 },
       footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
       margin: { left: 14, right: 14 },
+      styles: { fontSize: 8 },
     });
 
     yPos = (doc as any).lastAutoTable.finalY + 10;
