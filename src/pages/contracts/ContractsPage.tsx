@@ -63,19 +63,19 @@ export default function ContractsPage() {
     } as any;
   };
 
-  const handleDownloadContractPDF = (contract: ContractWithDetails) => {
+  const handleDownloadContractPDF = async (contract: ContractWithDetails) => {
     try {
       const pdfContract = toPdfContract(contract);
-      generateContractPDF(pdfContract, { mode: 'open' });
+      await generateContractPDF(pdfContract, { mode: 'download' });
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao gerar PDF do contrato');
     }
   };
 
-  const handleDownloadClientSheetPDF = (contract: ContractWithDetails) => {
+  const handleDownloadClientSheetPDF = async (contract: ContractWithDetails) => {
     try {
       const pdfContract = toPdfContract(contract);
-      generateClientSheetPDF(pdfContract, { mode: 'open' });
+      await generateClientSheetPDF(pdfContract, { mode: 'download' });
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao gerar PDF da ficha do cliente');
     }
