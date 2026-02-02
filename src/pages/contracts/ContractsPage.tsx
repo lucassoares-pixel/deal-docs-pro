@@ -8,9 +8,11 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useContracts, ContractWithDetails } from '@/hooks/useContracts';
-import { FileText, Plus, Search, Calendar, Loader2 } from 'lucide-react';
+import { generateClientSheetPDF, generateContractPDF } from '@/utils/pdfGenerator';
+import { FileDown, FileText, Plus, Search, Calendar, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export default function ContractsPage() {
   const navigate = useNavigate();
@@ -27,6 +29,56 @@ export default function ContractsPage() {
       style: 'currency',
       currency: 'BRL'
     }).format(value);
+  };
+
+  const toPdfContract = (contract: ContractWithDetails) => {
+    if (!contract.client) throw new Error('Contrato sem cliente');
+    if (!contract.legal_representative) throw new Error('Contrato sem representante legal');
+
+    const products = (contract.products ?? []).map((p) => {
+      if (!p.product) throw new Error('Contrato com produto incompleto');
+      return {
+        ...p,
+        product: p.product,
+      };
+    });
+
+    // pdfGenerator usa apenas alguns campos; montamos um objeto compatível.
+    return {
+      id: contract.id,
+      client_id: contract.client_id,
+      client: contract.client,
+      legal_representative: contract.legal_representative,
+      products,
+      recurring_total_full: Number(contract.recurring_total_full),
+      recurring_total_discounted: Number(contract.recurring_total_discounted),
+      setup_total: Number(contract.setup_total),
+      discount_applied_log: (contract.discount_logs ?? []) as any,
+      start_date: contract.start_date,
+      billing_day: contract.billing_day,
+      fidelity_months: contract.fidelity_months,
+      status: contract.status as any,
+      created_at: contract.created_at,
+      updated_at: contract.updated_at,
+    } as any;
+  };
+
+  const handleDownloadContractPDF = (contract: ContractWithDetails) => {
+    try {
+      const pdfContract = toPdfContract(contract);
+      generateContractPDF(pdfContract);
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao gerar PDF do contrato');
+    }
+  };
+
+  const handleDownloadClientSheetPDF = (contract: ContractWithDetails) => {
+    try {
+      const pdfContract = toPdfContract(contract);
+      generateClientSheetPDF(pdfContract);
+    } catch (e: any) {
+      toast.error(e?.message || 'Erro ao gerar PDF da ficha do cliente');
+    }
   };
 
   const columns = [
@@ -94,6 +146,31 @@ export default function ContractsPage() {
       header: 'Status',
       render: (contract: ContractWithDetails) => (
         <StatusBadge status={contract.status as any} />
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'PDFs',
+      className: 'text-right',
+      render: (contract: ContractWithDetails) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleDownloadContractPDF(contract)}
+          >
+            <FileDown className="w-4 h-4" />
+            Contrato
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleDownloadClientSheetPDF(contract)}
+          >
+            <FileDown className="w-4 h-4" />
+            Ficha
+          </Button>
+        </div>
       ),
     },
   ];
@@ -164,7 +241,6 @@ export default function ContractsPage() {
           columns={columns}
           data={filteredContracts}
           keyExtractor={(contract) => contract.id}
-          onRowClick={(contract) => navigate(`/contracts/${contract.id}`)}
           emptyMessage="Nenhum contrato encontrado com os filtros aplicados"
         />
       </div>
