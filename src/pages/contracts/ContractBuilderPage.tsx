@@ -26,7 +26,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { generateContractPDF, generateClientSheetPDF } from '@/utils/pdfGenerator';
 
 type Step = 'client' | 'products' | 'review';
 type Product = Tables<'products'>;
@@ -309,43 +308,9 @@ export default function ContractBuilderPage() {
       );
 
       if (result) {
-        // Generate PDFs with mock data format for compatibility
-        const pdfContract = {
-          id: result.id,
-          client_id: selectedClient.id,
-          client: selectedClient as any,
-          legal_representative: legalRep as any,
-          products: selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice }) => ({
-            product_id: product.id,
-            product: product as any,
-            quantity,
-            discount_percentage: discountPercentage,
-            full_price: Number(product.base_price) * quantity,
-            discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
-            discount_period_type: discountPeriodType,
-            discount_months: discountPeriodType === 'months' ? discountMonths : null,
-            discount_end_date: discountPeriodType === 'fixed_date' ? discountEndDate : null,
-            custom_enrollment_price: customImplementationPrice,
-          })),
-          recurring_total_full: calculations.recurringFull,
-          recurring_total_discounted: calculations.recurringWithExtraDiscount,
-          setup_total: calculations.implementationTotal,
-          extra_discount_value: calculations.extraDiscount,
-          extra_discount_period_type: extraDiscountPeriodType,
-          extra_discount_months: extraDiscountPeriodType === 'months' ? parseInt(extraDiscountMonths) || null : null,
-          extra_discount_end_date: extraDiscountPeriodType === 'fixed_date' ? extraDiscountEndDate || null : null,
-          discount_applied_log: discountLogs.map(l => ({ ...l, applied_at: new Date().toISOString() })),
-          start_date: startDate,
-          billing_day: parseInt(billingDay),
-          fidelity_months: calculations.maxFidelity,
-          status: 'active' as const,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        generateContractPDF(pdfContract);
-        generateClientSheetPDF(pdfContract);
-
+        // Evita download automático (frequentemente bloqueado em iframe).
+        // O usuário baixa manualmente pelos botões na listagem de contratos.
+        toast.success('Contrato criado! Baixe os PDFs na lista de contratos.');
         navigate('/contracts');
       }
     } catch (error) {

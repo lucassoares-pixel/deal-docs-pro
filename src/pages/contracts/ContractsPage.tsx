@@ -66,7 +66,7 @@ export default function ContractsPage() {
   const handleDownloadContractPDF = (contract: ContractWithDetails) => {
     try {
       const pdfContract = toPdfContract(contract);
-      generateContractPDF(pdfContract);
+      generateContractPDF(pdfContract, { mode: 'open' });
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao gerar PDF do contrato');
     }
@@ -75,7 +75,7 @@ export default function ContractsPage() {
   const handleDownloadClientSheetPDF = (contract: ContractWithDetails) => {
     try {
       const pdfContract = toPdfContract(contract);
-      generateClientSheetPDF(pdfContract);
+      generateClientSheetPDF(pdfContract, { mode: 'open' });
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao gerar PDF da ficha do cliente');
     }
