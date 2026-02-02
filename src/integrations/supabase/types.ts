@@ -318,6 +318,9 @@ export type Database = {
           billing_type: string
           created_at: string
           description: string
+          discount_end_date: string | null
+          discount_period_type: string
+          discount_start_date: string | null
           fidelity_months: number
           id: string
           max_discount_percentage: number
@@ -334,6 +337,9 @@ export type Database = {
           billing_type: string
           created_at?: string
           description: string
+          discount_end_date?: string | null
+          discount_period_type?: string
+          discount_start_date?: string | null
           fidelity_months?: number
           id?: string
           max_discount_percentage?: number
@@ -350,6 +356,9 @@ export type Database = {
           billing_type?: string
           created_at?: string
           description?: string
+          discount_end_date?: string | null
+          discount_period_type?: string
+          discount_start_date?: string | null
           fidelity_months?: number
           id?: string
           max_discount_percentage?: number

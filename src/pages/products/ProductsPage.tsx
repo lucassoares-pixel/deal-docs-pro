@@ -70,15 +70,29 @@ export default function ProductsPage() {
     },
     {
       key: 'discount',
-      header: 'Desconto Máx.',
-      render: (product: Product) => (
-        <div className="flex items-center gap-2">
-          <Percent className="w-4 h-4 text-muted-foreground" />
-          <span className={product.allow_discount ? 'text-foreground' : 'text-muted-foreground'}>
-            {product.allow_discount ? `${product.max_discount_percentage}%` : 'Não permitido'}
-          </span>
-        </div>
-      ),
+      header: 'Desconto',
+      render: (product: Product) => {
+        const discountPeriodType = (product as any).discount_period_type;
+        const discountEndDate = (product as any).discount_end_date;
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Percent className="w-4 h-4 text-muted-foreground" />
+              <span className={product.allow_discount ? 'text-foreground' : 'text-muted-foreground'}>
+                {product.allow_discount ? `Até ${product.max_discount_percentage}%` : 'Não permitido'}
+              </span>
+            </div>
+            {product.allow_discount && (
+              <span className="text-xs text-muted-foreground">
+                {discountPeriodType === 'fixed_period' && discountEndDate
+                  ? `Até ${new Date(discountEndDate).toLocaleDateString('pt-BR')}`
+                  : 'Indeterminado'}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'fidelity',
