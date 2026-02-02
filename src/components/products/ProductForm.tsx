@@ -10,7 +10,6 @@ import { Package, Save, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 type BillingType = 'recurring' | 'one_time';
-type DiscountPeriodType = 'indeterminate' | 'fixed_period';
 
 export interface ProductFormData {
   name: string;
@@ -20,9 +19,6 @@ export interface ProductFormData {
   setup_price: string;
   allow_discount: boolean;
   max_discount_percentage: string;
-  discount_period_type: DiscountPeriodType;
-  discount_start_date: string;
-  discount_end_date: string;
   fidelity_months: string;
   active: boolean;
 }
@@ -43,9 +39,6 @@ const defaultFormData: ProductFormData = {
   setup_price: '',
   allow_discount: true,
   max_discount_percentage: '20',
-  discount_period_type: 'indeterminate',
-  discount_start_date: '',
-  discount_end_date: '',
   fidelity_months: '12',
   active: true,
 };
@@ -72,19 +65,6 @@ export function ProductForm({
       const maxDiscount = parseFloat(formData.max_discount_percentage);
       if (isNaN(maxDiscount) || maxDiscount < 0 || maxDiscount > 100) {
         newErrors.max_discount_percentage = 'Desconto deve estar entre 0% e 100%';
-      }
-      if (formData.discount_period_type === 'fixed_period') {
-        if (!formData.discount_start_date) {
-          newErrors.discount_start_date = 'Data de início é obrigatória';
-        }
-        if (!formData.discount_end_date) {
-          newErrors.discount_end_date = 'Data de fim é obrigatória';
-        }
-        if (formData.discount_start_date && formData.discount_end_date) {
-          if (new Date(formData.discount_end_date) <= new Date(formData.discount_start_date)) {
-            newErrors.discount_end_date = 'Data de fim deve ser posterior à data de início';
-          }
-        }
       }
     }
 
@@ -223,81 +203,22 @@ export function ProductForm({
           </div>
 
           {formData.allow_discount && (
-            <>
-              <div className="max-w-xs">
-                <Label className="form-label">Desconto Máximo (%)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.max_discount_percentage}
-                  onChange={handleChange('max_discount_percentage')}
-                  placeholder="20"
-                  className={errors.max_discount_percentage ? 'border-destructive' : ''}
-                />
-                {errors.max_discount_percentage && (
-                  <p className="form-error">{errors.max_discount_percentage}</p>
-                )}
-                <p className="form-helper">Limite máximo de desconto permitido para vendedores</p>
-              </div>
-
-              <div className="space-y-4">
-                <Label className="form-label">Validade do Desconto</Label>
-                <RadioGroup
-                  value={formData.discount_period_type}
-                  onValueChange={(value: DiscountPeriodType) => setFormData(prev => ({ 
-                    ...prev, 
-                    discount_period_type: value,
-                    discount_start_date: value === 'indeterminate' ? '' : prev.discount_start_date,
-                    discount_end_date: value === 'indeterminate' ? '' : prev.discount_end_date,
-                  }))}
-                  className="flex flex-col space-y-3"
-                >
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="indeterminate" id="indeterminate" />
-                    <Label htmlFor="indeterminate" className="font-normal cursor-pointer">
-                      Indeterminado (sem prazo de validade)
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="fixed_period" id="fixed_period" />
-                    <Label htmlFor="fixed_period" className="font-normal cursor-pointer">
-                      Por período específico
-                    </Label>
-                  </div>
-                </RadioGroup>
-
-                {formData.discount_period_type === 'fixed_period' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pl-6">
-                    <div>
-                      <Label className="form-label">Data de Início *</Label>
-                      <Input
-                        type="date"
-                        value={formData.discount_start_date}
-                        onChange={handleChange('discount_start_date')}
-                        className={errors.discount_start_date ? 'border-destructive' : ''}
-                      />
-                      {errors.discount_start_date && (
-                        <p className="form-error">{errors.discount_start_date}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label className="form-label">Data de Fim *</Label>
-                      <Input
-                        type="date"
-                        value={formData.discount_end_date}
-                        onChange={handleChange('discount_end_date')}
-                        min={formData.discount_start_date || undefined}
-                        className={errors.discount_end_date ? 'border-destructive' : ''}
-                      />
-                      {errors.discount_end_date && (
-                        <p className="form-error">{errors.discount_end_date}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
+            <div className="max-w-xs">
+              <Label className="form-label">Desconto Máximo (%)</Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.max_discount_percentage}
+                onChange={handleChange('max_discount_percentage')}
+                placeholder="20"
+                className={errors.max_discount_percentage ? 'border-destructive' : ''}
+              />
+              {errors.max_discount_percentage && (
+                <p className="form-error">{errors.max_discount_percentage}</p>
+              )}
+              <p className="form-helper">Limite máximo de desconto permitido para vendedores. O período do desconto será definido no contrato.</p>
+            </div>
           )}
         </div>
       </div>
