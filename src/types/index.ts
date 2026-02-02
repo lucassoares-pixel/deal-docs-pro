@@ -29,6 +29,7 @@ export interface LegalRepresentative {
 // Product Types
 export type BillingType = 'recurring' | 'one_time';
 export type RecurringPeriod = 'monthly' | null;
+export type DiscountPeriodType = 'indeterminate' | 'fixed_period';
 
 export interface Product {
   id: string;
@@ -40,6 +41,9 @@ export interface Product {
   setup_price: number | null;
   allow_discount: boolean;
   max_discount_percentage: number;
+  discount_period_type: DiscountPeriodType;
+  discount_start_date: string | null;
+  discount_end_date: string | null;
   fidelity_months: number;
   active: boolean;
   created_at: string;
@@ -151,6 +155,9 @@ export interface ProductFormData {
   setup_price: number | null;
   allow_discount: boolean;
   max_discount_percentage: number;
+  discount_period_type: DiscountPeriodType;
+  discount_start_date: string | null;
+  discount_end_date: string | null;
   fidelity_months: number;
   active: boolean;
 }
