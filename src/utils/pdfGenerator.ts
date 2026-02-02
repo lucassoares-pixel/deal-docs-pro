@@ -11,7 +11,49 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-export function generateContractPDF(contract: Contract) {
+type PdfOutputMode = 'download' | 'open';
+
+interface PdfOptions {
+  /**
+   * download: tenta baixar direto (pode ser bloqueado em iframe)
+   * open: abre em nova aba (usuário pode imprimir/salvar)
+   */
+  mode?: PdfOutputMode;
+}
+
+function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
+  if (mode === 'download') {
+    doc.save(filename);
+    return;
+  }
+
+  // Em alguns ambientes (ex: preview em iframe), downloads automáticos são bloqueados.
+  // Abrir em nova aba costuma funcionar melhor e ainda permite salvar/baixar pelo navegador.
+  try {
+    const blob = (doc as any).output('blob') as Blob;
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (!opened) {
+      // fallback: tenta forçar download via link
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    // libera memória depois de um tempo
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch {
+    // último fallback
+    doc.save(filename);
+  }
+}
+
+export function generateContractPDF(contract: Contract, options: PdfOptions = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   let yPos = 20;
@@ -246,11 +288,12 @@ export function generateContractPDF(contract: Contract) {
   doc.text('', 52, yPos, { align: 'center' });
   doc.text(contract.legal_representative.legal_name, 153, yPos, { align: 'center' });
 
-  // Save
-  doc.save(`contrato_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  // Save/Open
+  const filename = `contrato_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+  finalizePdf(doc, filename, options.mode ?? 'download');
 }
 
-export function generateClientSheetPDF(contract: Contract) {
+export function generateClientSheetPDF(contract: Contract, options: PdfOptions = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   let yPos = 20;
@@ -354,6 +397,7 @@ export function generateClientSheetPDF(contract: Contract) {
   yPos += 4;
   doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, pageWidth / 2, yPos, { align: 'center' });
 
-  // Save
-  doc.save(`ficha_cliente_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`);
+  // Save/Open
+  const filename = `ficha_cliente_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+  finalizePdf(doc, filename, options.mode ?? 'download');
 }
