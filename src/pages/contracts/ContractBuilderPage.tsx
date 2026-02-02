@@ -33,10 +33,16 @@ type Product = Tables<'products'>;
 type Client = Tables<'clients'>;
 type LegalRep = Tables<'legal_representatives'>;
 
+type DiscountPeriodType = 'indeterminate' | 'months' | 'fixed_date';
+
 interface SelectedProduct {
   product: Product;
   quantity: number;
   discountPercentage: number;
+  discountPeriodType: DiscountPeriodType;
+  discountMonths: number | null;
+  discountEndDate: string | null;
+  customImplementationPrice: number | null;
 }
 
 export default function ContractBuilderPage() {
@@ -53,6 +59,12 @@ export default function ContractBuilderPage() {
   const [billingDay, setBillingDay] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Extra discount on subtotal
+  const [extraDiscountValue, setExtraDiscountValue] = useState<string>('');
+  const [extraDiscountPeriodType, setExtraDiscountPeriodType] = useState<DiscountPeriodType>('indeterminate');
+  const [extraDiscountMonths, setExtraDiscountMonths] = useState<string>('');
+  const [extraDiscountEndDate, setExtraDiscountEndDate] = useState<string>('');
+
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const legalRep = legalRepresentatives.find(lr => lr.client_id === selectedClientId);
 
@@ -64,22 +76,22 @@ export default function ContractBuilderPage() {
   const calculations = useMemo(() => {
     let recurringFull = 0;
     let recurringDiscounted = 0;
-    let setupTotal = 0;
+    let implementationTotal = 0;
 
-    selectedProducts.forEach(({ product, quantity, discountPercentage }) => {
+    selectedProducts.forEach(({ product, quantity, discountPercentage, customImplementationPrice }) => {
       if (product.billing_type === 'recurring') {
         const full = Number(product.base_price) * quantity;
         const discounted = full * (1 - discountPercentage / 100);
         recurringFull += full;
         recurringDiscounted += discounted;
         
-        if (product.setup_price) {
-          setupTotal += Number(product.setup_price) * quantity;
-        }
+        // Use custom implementation price or original
+        const implPrice = customImplementationPrice ?? (product.setup_price ? Number(product.setup_price) : 0);
+        implementationTotal += implPrice * quantity;
       } else {
         const full = Number(product.base_price) * quantity;
         const discounted = full * (1 - discountPercentage / 100);
-        setupTotal += discounted;
+        implementationTotal += discounted;
       }
     });
 
@@ -88,14 +100,20 @@ export default function ContractBuilderPage() {
       0
     );
 
+    // Apply extra discount
+    const extraDiscount = parseFloat(extraDiscountValue) || 0;
+    const recurringWithExtraDiscount = Math.max(0, recurringDiscounted - extraDiscount);
+
     return {
       recurringFull,
       recurringDiscounted,
-      setupTotal,
+      recurringWithExtraDiscount,
+      implementationTotal,
       maxFidelity,
       savings: recurringFull - recurringDiscounted,
+      extraDiscount,
     };
-  }, [selectedProducts]);
+  }, [selectedProducts, extraDiscountValue]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -115,7 +133,15 @@ export default function ContractBuilderPage() {
         )
       );
     } else {
-      setSelectedProducts(prev => [...prev, { product, quantity: 1, discountPercentage: 0 }]);
+      setSelectedProducts(prev => [...prev, { 
+        product, 
+        quantity: 1, 
+        discountPercentage: 0,
+        discountPeriodType: 'indeterminate',
+        discountMonths: null,
+        discountEndDate: null,
+        customImplementationPrice: product.setup_price ? Number(product.setup_price) : null,
+      }]);
     }
   };
 
@@ -153,6 +179,43 @@ export default function ContractBuilderPage() {
     );
   };
 
+  const handleDiscountPeriodChange = (productId: string, periodType: DiscountPeriodType) => {
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { 
+          ...p, 
+          discountPeriodType: periodType,
+          discountMonths: periodType === 'months' ? p.discountMonths : null,
+          discountEndDate: periodType === 'fixed_date' ? p.discountEndDate : null,
+        } : p
+      )
+    );
+  };
+
+  const handleDiscountMonthsChange = (productId: string, months: number | null) => {
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { ...p, discountMonths: months } : p
+      )
+    );
+  };
+
+  const handleDiscountEndDateChange = (productId: string, date: string | null) => {
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { ...p, discountEndDate: date } : p
+      )
+    );
+  };
+
+  const handleImplementationPriceChange = (productId: string, price: number | null) => {
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { ...p, customImplementationPrice: price } : p
+      )
+    );
+  };
+
   const validateStep = () => {
     if (step === 'client') {
       if (!selectedClientId) {
@@ -163,6 +226,19 @@ export default function ContractBuilderPage() {
       if (selectedProducts.length === 0) {
         toast.error('Selecione pelo menos um produto');
         return false;
+      }
+      // Validate discount periods
+      for (const sp of selectedProducts) {
+        if (sp.discountPercentage > 0) {
+          if (sp.discountPeriodType === 'months' && (!sp.discountMonths || sp.discountMonths <= 0)) {
+            toast.error(`Defina o período do desconto para ${sp.product.name}`);
+            return false;
+          }
+          if (sp.discountPeriodType === 'fixed_date' && !sp.discountEndDate) {
+            toast.error(`Defina a data final do desconto para ${sp.product.name}`);
+            return false;
+          }
+        }
       }
     }
     return true;
@@ -189,12 +265,16 @@ export default function ContractBuilderPage() {
     setIsSubmitting(true);
 
     try {
-      const contractProducts = selectedProducts.map(({ product, quantity, discountPercentage }) => ({
+      const contractProducts = selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice }) => ({
         product_id: product.id,
         quantity,
         discount_percentage: discountPercentage,
         full_price: Number(product.base_price) * quantity,
         discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
+        discount_period_type: discountPeriodType,
+        discount_months: discountPeriodType === 'months' ? discountMonths : null,
+        discount_end_date: discountPeriodType === 'fixed_date' ? discountEndDate : null,
+        custom_enrollment_price: customImplementationPrice,
       }));
 
       const discountLogs = selectedProducts
@@ -213,12 +293,16 @@ export default function ContractBuilderPage() {
           client_id: selectedClient.id,
           legal_representative_id: legalRep.id,
           recurring_total_full: calculations.recurringFull,
-          recurring_total_discounted: calculations.recurringDiscounted,
-          setup_total: calculations.setupTotal,
+          recurring_total_discounted: calculations.recurringWithExtraDiscount,
+          setup_total: calculations.implementationTotal,
           start_date: startDate,
           billing_day: parseInt(billingDay),
           fidelity_months: calculations.maxFidelity,
           status: 'active',
+          extra_discount_value: calculations.extraDiscount,
+          extra_discount_period_type: extraDiscountPeriodType,
+          extra_discount_months: extraDiscountPeriodType === 'months' ? parseInt(extraDiscountMonths) || null : null,
+          extra_discount_end_date: extraDiscountPeriodType === 'fixed_date' ? extraDiscountEndDate || null : null,
         },
         contractProducts,
         discountLogs
@@ -231,17 +315,25 @@ export default function ContractBuilderPage() {
           client_id: selectedClient.id,
           client: selectedClient as any,
           legal_representative: legalRep as any,
-          products: selectedProducts.map(({ product, quantity, discountPercentage }) => ({
+          products: selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice }) => ({
             product_id: product.id,
             product: product as any,
             quantity,
             discount_percentage: discountPercentage,
             full_price: Number(product.base_price) * quantity,
             discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
+            discount_period_type: discountPeriodType,
+            discount_months: discountPeriodType === 'months' ? discountMonths : null,
+            discount_end_date: discountPeriodType === 'fixed_date' ? discountEndDate : null,
+            custom_enrollment_price: customImplementationPrice,
           })),
           recurring_total_full: calculations.recurringFull,
-          recurring_total_discounted: calculations.recurringDiscounted,
-          setup_total: calculations.setupTotal,
+          recurring_total_discounted: calculations.recurringWithExtraDiscount,
+          setup_total: calculations.implementationTotal,
+          extra_discount_value: calculations.extraDiscount,
+          extra_discount_period_type: extraDiscountPeriodType,
+          extra_discount_months: extraDiscountPeriodType === 'months' ? parseInt(extraDiscountMonths) || null : null,
+          extra_discount_end_date: extraDiscountPeriodType === 'fixed_date' ? extraDiscountEndDate || null : null,
           discount_applied_log: discountLogs.map(l => ({ ...l, applied_at: new Date().toISOString() })),
           start_date: startDate,
           billing_day: parseInt(billingDay),
@@ -506,13 +598,15 @@ export default function ContractBuilderPage() {
             {selectedProducts.length > 0 && (
               <div className="card-elevated p-6">
                 <h2 className="section-title">Produtos Selecionados</h2>
-                <div className="space-y-4">
-                  {selectedProducts.map(({ product, quantity, discountPercentage }) => {
+                <div className="space-y-6">
+                  {selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice }) => {
                     const fullPrice = Number(product.base_price) * quantity;
                     const discountedPrice = fullPrice * (1 - discountPercentage / 100);
+                    const hasImplementation = product.billing_type === 'recurring' && product.setup_price;
                     
                     return (
-                      <div key={product.id} className="p-4 bg-muted/30 rounded-lg">
+                      <div key={product.id} className="p-4 bg-muted/30 rounded-lg space-y-4">
+                        {/* Row 1: Product info, quantity, remove */}
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                           <div className="flex-1">
                             <p className="font-medium text-foreground">{product.name}</p>
@@ -545,26 +639,6 @@ export default function ContractBuilderPage() {
                               </div>
                             </div>
 
-                            {/* Discount */}
-                            <div className="flex items-center gap-2">
-                              <Label className="text-sm text-muted-foreground">Desc:</Label>
-                              <div className="relative w-20">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max={product.max_discount_percentage}
-                                  value={discountPercentage}
-                                  onChange={(e) => handleDiscountChange(product.id, parseFloat(e.target.value) || 0)}
-                                  className="pr-6 text-right"
-                                  disabled={!product.allow_discount}
-                                />
-                                <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                              </div>
-                              {!product.allow_discount && (
-                                <span className="text-xs text-muted-foreground">(não permitido)</span>
-                              )}
-                            </div>
-
                             {/* Prices */}
                             <div className="text-right min-w-[120px]">
                               {discountPercentage > 0 ? (
@@ -593,6 +667,103 @@ export default function ContractBuilderPage() {
                             </Button>
                           </div>
                         </div>
+
+                        {/* Row 2: Discount configuration */}
+                        {product.allow_discount && (
+                          <div className="pt-4 border-t border-border/50">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              {/* Discount Percentage */}
+                              <div>
+                                <Label className="text-sm text-muted-foreground">Desconto (%)</Label>
+                                <div className="relative mt-1">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max={product.max_discount_percentage}
+                                    value={discountPercentage}
+                                    onChange={(e) => handleDiscountChange(product.id, parseFloat(e.target.value) || 0)}
+                                    className="pr-6 text-right"
+                                  />
+                                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">Máx: {product.max_discount_percentage}%</p>
+                              </div>
+
+                              {/* Discount Period Type */}
+                              {discountPercentage > 0 && (
+                                <>
+                                  <div>
+                                    <Label className="text-sm text-muted-foreground">Período do Desconto</Label>
+                                    <Select
+                                      value={discountPeriodType}
+                                      onValueChange={(value: DiscountPeriodType) => handleDiscountPeriodChange(product.id, value)}
+                                    >
+                                      <SelectTrigger className="mt-1">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="indeterminate">Indeterminado</SelectItem>
+                                        <SelectItem value="months">Por meses</SelectItem>
+                                        <SelectItem value="fixed_date">Até data específica</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  {/* Discount Months */}
+                                  {discountPeriodType === 'months' && (
+                                    <div>
+                                      <Label className="text-sm text-muted-foreground">Quantidade de Meses</Label>
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        value={discountMonths || ''}
+                                        onChange={(e) => handleDiscountMonthsChange(product.id, parseInt(e.target.value) || null)}
+                                        placeholder="Ex: 3"
+                                        className="mt-1"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* Discount End Date */}
+                                  {discountPeriodType === 'fixed_date' && (
+                                    <div>
+                                      <Label className="text-sm text-muted-foreground">Data Final</Label>
+                                      <Input
+                                        type="date"
+                                        value={discountEndDate || ''}
+                                        onChange={(e) => handleDiscountEndDateChange(product.id, e.target.value || null)}
+                                        className="mt-1"
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Row 3: Implementation price (for recurring products) */}
+                        {hasImplementation && (
+                          <div className="pt-4 border-t border-border/50">
+                            <div className="flex items-center gap-4">
+                              <div className="w-48">
+                                <Label className="text-sm text-muted-foreground">Valor de Implantação (R$)</Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={customImplementationPrice ?? ''}
+                                  onChange={(e) => handleImplementationPriceChange(product.id, parseFloat(e.target.value) || null)}
+                                  placeholder={product.setup_price?.toString() || '0'}
+                                  className="mt-1"
+                                />
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Valor original: {formatCurrency(Number(product.setup_price) || 0)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -602,7 +773,7 @@ export default function ContractBuilderPage() {
                 <div className="mt-6 pt-6 border-t border-border">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-accent/5 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Recorrente Mensal</p>
+                      <p className="text-sm text-muted-foreground mb-1">Subtotal Mensal</p>
                       <p className="text-2xl font-bold text-foreground">
                         {formatCurrency(calculations.recurringDiscounted)}
                       </p>
@@ -613,9 +784,9 @@ export default function ContractBuilderPage() {
                       )}
                     </div>
                     <div className="p-4 bg-warning/5 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Setup / Únicos</p>
+                      <p className="text-sm text-muted-foreground mb-1">Implantação / Únicos</p>
                       <p className="text-2xl font-bold text-foreground">
-                        {formatCurrency(calculations.setupTotal)}
+                        {formatCurrency(calculations.implementationTotal)}
                       </p>
                     </div>
                     <div className="p-4 bg-muted/50 rounded-lg">
@@ -625,6 +796,98 @@ export default function ContractBuilderPage() {
                       </p>
                     </div>
                   </div>
+                </div>
+
+                {/* Extra Discount on Subtotal */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="font-medium text-foreground mb-4">Desconto Extra sobre o Subtotal</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Aplique um desconto adicional sobre o valor mensal total. Este desconto não altera os valores individuais dos módulos.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Valor do Desconto (R$)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={extraDiscountValue}
+                        onChange={(e) => setExtraDiscountValue(e.target.value)}
+                        placeholder="0,00"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    {parseFloat(extraDiscountValue) > 0 && (
+                      <>
+                        <div>
+                          <Label className="text-sm text-muted-foreground">Período do Desconto</Label>
+                          <Select
+                            value={extraDiscountPeriodType}
+                            onValueChange={(value: DiscountPeriodType) => {
+                              setExtraDiscountPeriodType(value);
+                              if (value !== 'months') setExtraDiscountMonths('');
+                              if (value !== 'fixed_date') setExtraDiscountEndDate('');
+                            }}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="indeterminate">Indeterminado</SelectItem>
+                              <SelectItem value="months">Por meses</SelectItem>
+                              <SelectItem value="fixed_date">Até data específica</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {extraDiscountPeriodType === 'months' && (
+                          <div>
+                            <Label className="text-sm text-muted-foreground">Quantidade de Meses</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={extraDiscountMonths}
+                              onChange={(e) => setExtraDiscountMonths(e.target.value)}
+                              placeholder="Ex: 3"
+                              className="mt-1"
+                            />
+                          </div>
+                        )}
+
+                        {extraDiscountPeriodType === 'fixed_date' && (
+                          <div>
+                            <Label className="text-sm text-muted-foreground">Data Final</Label>
+                            <Input
+                              type="date"
+                              value={extraDiscountEndDate}
+                              onChange={(e) => setExtraDiscountEndDate(e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {calculations.extraDiscount > 0 && (
+                    <div className="mt-4 p-4 bg-success/10 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Valor Final Mensal com Desconto Extra</p>
+                          <p className="text-xs text-muted-foreground">
+                            {extraDiscountPeriodType === 'indeterminate' && 'Desconto por tempo indeterminado'}
+                            {extraDiscountPeriodType === 'months' && `Desconto válido por ${extraDiscountMonths} meses`}
+                            {extraDiscountPeriodType === 'fixed_date' && `Desconto válido até ${new Date(extraDiscountEndDate).toLocaleDateString('pt-BR')}`}
+                          </p>
+                        </div>
+                        <p className="text-2xl font-bold text-success">
+                          {formatCurrency(calculations.recurringWithExtraDiscount)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -790,10 +1053,10 @@ export default function ContractBuilderPage() {
                     <tfoot>
                       <tr className="bg-muted/30">
                         <td colSpan={2} className="px-6 py-4 text-right font-medium">
-                          Total Setup/Único:
+                          Total Implantação/Único:
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-foreground">
-                          {formatCurrency(calculations.setupTotal)}
+                          {formatCurrency(calculations.implementationTotal)}
                         </td>
                       </tr>
                     </tfoot>
@@ -813,10 +1076,15 @@ export default function ContractBuilderPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-primary-foreground/80 mb-1">Valor Mensal</p>
-                  <p className="text-3xl font-bold">{formatCurrency(calculations.recurringDiscounted)}</p>
-                  {calculations.setupTotal > 0 && (
+                  <p className="text-3xl font-bold">{formatCurrency(calculations.recurringWithExtraDiscount)}</p>
+                  {calculations.extraDiscount > 0 && (
+                    <p className="text-sm text-primary-foreground/70">
+                      (Desconto extra: -{formatCurrency(calculations.extraDiscount)})
+                    </p>
+                  )}
+                  {calculations.implementationTotal > 0 && (
                     <p className="text-primary-foreground/80 mt-2">
-                      + {formatCurrency(calculations.setupTotal)} (setup/único)
+                      + {formatCurrency(calculations.implementationTotal)} (implantação/único)
                     </p>
                   )}
                 </div>
