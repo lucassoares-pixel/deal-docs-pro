@@ -6,13 +6,12 @@ import {
   FileText, 
   Plus,
   History,
-  Settings,
-  FileSignature,
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
+import logoCompeti from '@/assets/logo-competi.jpg';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -33,16 +32,14 @@ export function Sidebar() {
 
   return (
     <aside className="w-64 bg-sidebar flex flex-col border-r border-sidebar-border">
-      {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center">
-            <FileSignature className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">ContractGen</h1>
-            <p className="text-xs text-sidebar-foreground/60">SaaS Contracts</p>
-          </div>
+      {/* Logo Competi */}
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-center">
+          <img 
+            src={logoCompeti} 
+            alt="Competi" 
+            className="h-10 w-auto object-contain"
+          />
         </div>
       </div>
 

@@ -3,6 +3,30 @@ import autoTable from 'jspdf-autotable';
 import { Contract } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { CONTRACT_CLAUSES, DISCOUNT_CLAUSE } from './pdfClauses';
+
+// Logo em base64 será carregada dinamicamente
+let logoBase64: string | null = null;
+
+async function loadLogo(): Promise<string | null> {
+  if (logoBase64) return logoBase64;
+  
+  try {
+    const response = await fetch('/logo-competi.jpg');
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        logoBase64 = reader.result as string;
+        resolve(logoBase64);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -14,10 +38,6 @@ const formatCurrency = (value: number) => {
 type PdfOutputMode = 'download' | 'open';
 
 interface PdfOptions {
-  /**
-   * download: tenta baixar direto (pode ser bloqueado em iframe)
-   * open: abre em nova aba (usuário pode imprimir/salvar)
-   */
   mode?: PdfOutputMode;
 }
 
@@ -42,7 +62,6 @@ async function trySaveWithNativeFilePicker(doc: jsPDF, filename: string): Promis
     await writable.close();
     return true;
   } catch (e: any) {
-    // Usuário cancelou o diálogo: consideramos "resolvido" para não disparar outros fallbacks.
     if (e?.name === 'AbortError') return true;
     return false;
   }
@@ -50,38 +69,28 @@ async function trySaveWithNativeFilePicker(doc: jsPDF, filename: string): Promis
 
 async function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
   if (mode === 'download') {
-    // Método mais confiável quando extensões bloqueiam `blob:` (ERR_BLOCKED_BY_CLIENT):
-    // usa o File System Access API para salvar diretamente no disco.
     const saved = await trySaveWithNativeFilePicker(doc, filename);
     if (saved) return;
 
-    // Fallback: abre o PDF na MESMA aba (sem popup e sem `blob:`). O usuário salva pelo browser.
     try {
       const dataUri = (doc as any).output('datauristring') as string;
       window.location.assign(dataUri);
       return;
     } catch {
-      // continua para último fallback
+      // continua para fallback
     }
 
-    // Último fallback
     doc.save(filename);
     return;
   }
 
-  // Em alguns ambientes (ex: preview em iframe), downloads automáticos/Blob URLs são bloqueados.
-  // O erro do usuário (ERR_BLOCKED_BY_CLIENT) indica bloqueio do tipo `blob:`.
-  // Portanto, priorizamos abrir via *data URL* (não-blob), que tende a funcionar mesmo com bloqueadores.
   try {
-    // jsPDF já tem um helper que abre em nova aba usando data URL
-    // (isso evita blob: e costuma não ser bloqueado por extensões)
     (doc as any).output('dataurlnewwindow');
     return;
   } catch {
-    // continua para os fallbacks abaixo
+    // continua para fallbacks
   }
 
-  // Fallback 1: data URI manual
   try {
     const dataUri = (doc as any).output('datauristring') as string;
     const opened = window.open(dataUri, '_blank', 'noopener,noreferrer');
@@ -90,7 +99,6 @@ async function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
     // ignore
   }
 
-  // Fallback 2: blob (pode ser bloqueado) + link download
   try {
     const blob = (doc as any).output('blob') as Blob;
     const url = URL.createObjectURL(blob);
@@ -107,246 +115,239 @@ async function finalizePdf(doc: jsPDF, filename: string, mode: PdfOutputMode) {
     // ignore
   }
 
-  // Último fallback
   doc.save(filename);
+}
+
+function addHeader(doc: jsPDF, logo: string | null, pageWidth: number): number {
+  let yPos = 15;
+  
+  // Logo centralizado
+  if (logo) {
+    try {
+      // Logo com 50mm de largura, centralizado
+      const logoWidth = 50;
+      const logoHeight = 15;
+      const logoX = (pageWidth - logoWidth) / 2;
+      doc.addImage(logo, 'JPEG', logoX, yPos, logoWidth, logoHeight);
+      yPos += logoHeight + 10;
+    } catch {
+      yPos += 5;
+    }
+  }
+  
+  return yPos;
 }
 
 export async function generateContractPDF(contract: Contract, options: PdfOptions = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
-  let yPos = 20;
+  
+  // Carregar logo
+  const logo = await loadLogo();
+  
+  let yPos = addHeader(doc, logo, pageWidth);
 
-  // Header
-  doc.setFontSize(20);
+  // Título
+  doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS SaaS', pageWidth / 2, yPos, { align: 'center' });
-  yPos += 15;
+  yPos += 10;
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Contrato Nº: ${contract.id}`, pageWidth / 2, yPos, { align: 'center' });
   yPos += 5;
   doc.text(`Data: ${format(new Date(contract.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`, pageWidth / 2, yPos, { align: 'center' });
-  yPos += 15;
+  yPos += 12;
 
-  // Client Info
-  doc.setFontSize(12);
+  // Dados do Contratante
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.text('CONTRATANTE:', 14, yPos);
-  yPos += 7;
+  yPos += 6;
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text(`Razão Social: ${contract.client.company_name}`, 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.text(`Nome Fantasia: ${contract.client.trade_name}`, 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.text(`CNPJ: ${contract.client.cnpj}`, 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number} - ${contract.client.address_neighborhood}`, 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.text(`${contract.client.address_city}/${contract.client.address_state} - CEP: ${contract.client.address_zip}`, 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.text(`E-mail: ${contract.client.email} | Telefone: ${contract.client.phone}`, 14, yPos);
-  yPos += 10;
+  yPos += 8;
 
   doc.setFont('helvetica', 'bold');
   doc.text('Representante Legal:', 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.setFont('helvetica', 'normal');
   doc.text(`${contract.legal_representative.legal_name} - ${contract.legal_representative.role}`, 14, yPos);
-  yPos += 5;
+  yPos += 4;
   doc.text(`CPF: ${contract.legal_representative.cpf}`, 14, yPos);
-  yPos += 15;
-
-  // Recurring Products Table
-  const recurringProducts = contract.products.filter(p => p.product.billing_type === 'recurring');
-  if (recurringProducts.length > 0) {
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PRODUTOS RECORRENTES (MENSAIS)', 14, yPos);
-    yPos += 5;
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [['PRODUTO', 'QTD', 'IMPLANTAÇÃO', 'VALOR CHEIO', 'DESCONTO', 'VALOR C/ DESC', 'FIDELIDADE']],
-      body: recurringProducts.map(p => [
-        p.product.name,
-        p.quantity.toString(),
-        formatCurrency((p.product.setup_price || 0) * p.quantity),
-        formatCurrency(p.full_price),
-        p.discount_percentage > 0 ? `${p.discount_percentage}%` : '-',
-        formatCurrency(p.discounted_price),
-        `[${p.product.fidelity_months} Meses]`
-      ]),
-      foot: [[
-        'TOTAL', 
-        '', 
-        formatCurrency(contract.setup_total), 
-        formatCurrency(contract.recurring_total_full), 
-        '', 
-        formatCurrency(contract.recurring_total_discounted), 
-        `[${contract.fidelity_months} Meses]`
-      ]],
-      theme: 'striped',
-      headStyles: { fillColor: [34, 52, 79], textColor: 255 },
-      footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
-      margin: { left: 14, right: 14 },
-      styles: { fontSize: 8 },
-    });
-
-    yPos = (doc as any).lastAutoTable.finalY + 10;
-  }
-
-  // Setup/One-Time Products Table
-  const setupProducts = contract.products.filter(p => p.product.billing_type === 'one_time' || p.product.setup_price);
-  if (setupProducts.length > 0 || contract.setup_total > 0) {
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SETUP E COBRANÇAS ÚNICAS', 14, yPos);
-    yPos += 5;
-
-    const setupRows: string[][] = [];
-    
-    // Add setup fees for recurring products
-    contract.products.forEach(p => {
-      if (p.product.billing_type === 'recurring' && p.product.setup_price) {
-        setupRows.push([
-          `Setup - ${p.product.name}`,
-          p.quantity.toString(),
-          formatCurrency((p.product.setup_price || 0) * p.quantity)
-        ]);
-      }
-    });
-
-    // Add one-time products
-    contract.products
-      .filter(p => p.product.billing_type === 'one_time')
-      .forEach(p => {
-        setupRows.push([
-          p.product.name,
-          p.quantity.toString(),
-          formatCurrency(p.discounted_price)
-        ]);
-      });
-
-    if (setupRows.length > 0) {
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Produto/Serviço', 'Qtd', 'Valor']],
-        body: setupRows,
-        foot: [['Total Setup/Único:', '', formatCurrency(contract.setup_total)]],
-        theme: 'striped',
-        headStyles: { fillColor: [34, 52, 79], textColor: 255 },
-        footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
-        margin: { left: 14, right: 14 },
-      });
-
-      yPos = (doc as any).lastAutoTable.finalY + 10;
-    }
-  }
-
-  // Contract Details
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CONDIÇÕES DO CONTRATO', 14, yPos);
-  yPos += 7;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Data de Início: ${format(new Date(contract.start_date), "dd/MM/yyyy")}`, 14, yPos);
-  yPos += 5;
-  doc.text(`Dia de Vencimento: ${contract.billing_day}`, 14, yPos);
-  yPos += 5;
-  doc.text(`Período de Fidelidade: ${contract.fidelity_months} meses`, 14, yPos);
-  yPos += 15;
-
-  // Add a new page for clauses
-  doc.addPage();
-  yPos = 20;
-
-  // Clauses
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CLÁUSULAS CONTRATUAIS', 14, yPos);
   yPos += 10;
 
-  const clauses = [
-    {
-      title: '1. OBJETO',
-      content: 'O presente contrato tem por objeto a licença de uso de software como serviço (SaaS) dos produtos descritos neste instrumento, conforme especificações técnicas e comerciais estabelecidas.'
-    },
-    {
-      title: '2. VIGÊNCIA',
-      content: `Este contrato terá vigência a partir de ${format(new Date(contract.start_date), "dd/MM/yyyy")} pelo período mínimo de ${contract.fidelity_months} meses (fidelidade), renovando-se automaticamente por períodos iguais e sucessivos.`
-    },
-    {
-      title: '3. PAGAMENTO',
-      content: `Os valores serão cobrados mensalmente, com vencimento no dia ${contract.billing_day} de cada mês, mediante boleto bancário ou cartão de crédito. Em caso de atraso, incidirão multa de 2% e juros de 1% ao mês.`
-    },
-    {
-      title: '4. REAJUSTE',
-      content: 'Os valores contratados serão reajustados anualmente pelo índice IPCA/IBGE acumulado no período, ou índice que venha a substituí-lo.'
-    },
-    {
-      title: '5. INADIMPLÊNCIA',
-      content: 'A falta de pagamento por mais de 30 (trinta) dias poderá acarretar a suspensão do acesso aos serviços até a regularização do débito.'
-    },
-    {
-      title: '6. RESCISÃO',
-      content: 'Durante o período de fidelidade, a rescisão antecipada por parte do CONTRATANTE implicará em multa correspondente a 50% do valor restante do período de fidelidade.'
-    },
-    {
-      title: '7. LGPD',
-      content: 'As partes se comprometem a observar as disposições da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), garantindo a privacidade e segurança dos dados pessoais tratados.'
-    },
-    {
-      title: '8. FORO',
-      content: 'Fica eleito o foro da Comarca de São Paulo/SP para dirimir quaisquer questões oriundas deste contrato, renunciando-se a qualquer outro, por mais privilegiado que seja.'
-    }
-  ];
-
+  // CLÁUSULA 1 - DO OBJETO
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(CONTRACT_CLAUSES[0].title, 14, yPos);
+  yPos += 5;
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  clauses.forEach(clause => {
-    if (yPos > 260) {
-      doc.addPage();
-      yPos = 20;
-    }
+  const clause1Lines = doc.splitTextToSize(CONTRACT_CLAUSES[0].content, pageWidth - 28);
+  doc.text(clause1Lines, 14, yPos);
+  yPos += clause1Lines.length * 4 + 8;
 
-    doc.setFont('helvetica', 'bold');
-    doc.text(clause.title, 14, yPos);
-    yPos += 5;
-    doc.setFont('helvetica', 'normal');
-    const lines = doc.splitTextToSize(clause.content, pageWidth - 28);
-    doc.text(lines, 14, yPos);
-    yPos += lines.length * 4 + 8;
+  // CLÁUSULA 2 - PRODUTOS (com tabela)
+  if (yPos > 200) {
+    doc.addPage();
+    yPos = addHeader(doc, logo, pageWidth);
+  }
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(CONTRACT_CLAUSES[1].title, 14, yPos);
+  yPos += 8;
+
+  // Verificar se há desconto para adicionar nota
+  const hasDiscount = contract.products.some(p => p.discount_percentage > 0) || 
+    (contract.recurring_total_discounted < contract.recurring_total_full);
+  
+  if (hasDiscount) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`*FOI CONCEDIDO UM DESCONTO SOBRE O VALOR DA MENSALIDADE, QUE DEVERÁ TER A COBRANÇA DE ${formatCurrency(contract.recurring_total_discounted)} NO CNPJ POR PERÍODO INDETERMINADO.`, 14, yPos, { maxWidth: pageWidth - 28 });
+    yPos += 8;
+  }
+
+  // Tabela de produtos
+  autoTable(doc, {
+    startY: yPos,
+    head: [['PRODUTO', 'QTD', 'VALOR ADESÃO', 'VALOR MENSALIDADE', 'FIDELIDADE']],
+    body: contract.products.map(p => [
+      p.product.name,
+      p.quantity.toString(),
+      formatCurrency((p.product.setup_price || 0) * p.quantity),
+      formatCurrency(p.discounted_price),
+      `[${p.product.fidelity_months} Meses]`
+    ]),
+    foot: [[
+      'TOTAL', 
+      '', 
+      formatCurrency(contract.setup_total), 
+      formatCurrency(contract.recurring_total_discounted), 
+      `[${contract.fidelity_months} Meses]`
+    ]],
+    theme: 'striped',
+    headStyles: { fillColor: [34, 52, 79], textColor: 255, fontSize: 8 },
+    bodyStyles: { fontSize: 8 },
+    footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', fontSize: 8 },
+    margin: { left: 14, right: 14 },
   });
 
-  // Signatures
-  if (yPos > 220) {
+  yPos = (doc as any).lastAutoTable.finalY + 10;
+
+  // CLÁUSULA 3 - VIGÊNCIA
+  if (yPos > 240) {
     doc.addPage();
-    yPos = 20;
+    yPos = addHeader(doc, logo, pageWidth);
   }
 
-  yPos += 20;
   doc.setFontSize(10);
-  doc.text('E por estarem assim justas e contratadas, as partes assinam o presente instrumento.', 14, yPos);
-  yPos += 10;
-  doc.text(`${contract.client.address_city}/${contract.client.address_state}, ${format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`, 14, yPos);
-  yPos += 30;
+  doc.setFont('helvetica', 'bold');
+  doc.text(CONTRACT_CLAUSES[2].title, 14, yPos);
+  yPos += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const clause3Content = CONTRACT_CLAUSES[2].content
+    .replace('[FIDELIDADE_MESES]', contract.fidelity_months.toString());
+  const clause3Lines = doc.splitTextToSize(clause3Content, pageWidth - 28);
+  doc.text(clause3Lines, 14, yPos);
+  yPos += clause3Lines.length * 4 + 8;
 
-  // Signature lines
+  // CLÁUSULA 4 - MENSALIDADES
+  if (yPos > 240) {
+    doc.addPage();
+    yPos = addHeader(doc, logo, pageWidth);
+  }
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(CONTRACT_CLAUSES[3].title, 14, yPos);
+  yPos += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const clause4Content = CONTRACT_CLAUSES[3].content
+    .replace('[DIA_VENCIMENTO]', contract.billing_day.toString());
+  const clause4Lines = doc.splitTextToSize(clause4Content, pageWidth - 28);
+  doc.text(clause4Lines, 14, yPos);
+  yPos += clause4Lines.length * 4 + 8;
+
+  // Demais cláusulas (5 a 12)
+  for (let i = 4; i < CONTRACT_CLAUSES.length; i++) {
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = addHeader(doc, logo, pageWidth);
+    }
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(CONTRACT_CLAUSES[i].title, 14, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const lines = doc.splitTextToSize(CONTRACT_CLAUSES[i].content, pageWidth - 28);
+    doc.text(lines, 14, yPos);
+    yPos += lines.length * 4 + 8;
+  }
+
+  // Cláusula especial de desconto (se houver desconto)
+  if (hasDiscount) {
+    if (yPos > 240) {
+      doc.addPage();
+      yPos = addHeader(doc, logo, pageWidth);
+    }
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(DISCOUNT_CLAUSE.title, 14, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const discountLines = doc.splitTextToSize(DISCOUNT_CLAUSE.content, pageWidth - 28);
+    doc.text(discountLines, 14, yPos);
+    yPos += discountLines.length * 4 + 8;
+  }
+
+  // Assinaturas
+  if (yPos > 220) {
+    doc.addPage();
+    yPos = addHeader(doc, logo, pageWidth);
+  }
+
+  yPos += 15;
+  doc.setFontSize(9);
+  doc.text('E por estarem assim justas e contratadas, as partes assinam o presente instrumento.', 14, yPos);
+  yPos += 8;
+  doc.text(`${contract.client.address_city}/${contract.client.address_state}, ${format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`, 14, yPos);
+  yPos += 25;
+
+  // Linhas de assinatura
   doc.line(14, yPos, 90, yPos);
   doc.line(110, yPos, 196, yPos);
   yPos += 5;
+  doc.setFontSize(9);
   doc.text('CONTRATADA', 52, yPos, { align: 'center' });
   doc.text('CONTRATANTE', 153, yPos, { align: 'center' });
-  yPos += 5;
+  yPos += 4;
   doc.setFontSize(8);
-  doc.text('', 52, yPos, { align: 'center' });
+  doc.text('COMPETI SISTEMAS LTDA', 52, yPos, { align: 'center' });
   doc.text(contract.legal_representative.legal_name, 153, yPos, { align: 'center' });
 
-  // Save/Open
+  // Salvar
   const filename = `contrato_${contract.client.trade_name.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`;
   await finalizePdf(doc, filename, options.mode ?? 'download');
 }
@@ -354,7 +355,11 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 export async function generateClientSheetPDF(contract: Contract, options: PdfOptions = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
-  let yPos = 20;
+  
+  // Carregar logo
+  const logo = await loadLogo();
+  
+  let yPos = addHeader(doc, logo, pageWidth);
 
   // Header
   doc.setFontSize(18);
