@@ -170,13 +170,17 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('COMPETI SISTEMAS LTDA, pessoa jurídica de direito privado, inscrita no CNPJ nº 13.885.290/0001-40,', 14, yPos);
+  doc.text('Razão Social: COMPETI SISTEMAS LTDA', 14, yPos);
   yPos += 4;
-  doc.text('com sede na Av. JK, Quadra 19, Lote 01, Sala 01, Pavimento 04, nº 500, Bairro Jundiaí, Anápolis-GO,', 14, yPos);
+  doc.text('CNPJ: 13.885.290/0001-40', 14, yPos);
   yPos += 4;
-  doc.text('CEP 75070-400, e-mail: financeiro@competisistemas.com.br, telefone: (62) 3098-2122,', 14, yPos);
+  doc.text('Endereço: Av. JK, Quadra 19, Lote 01, Sala 01, Pavimento 04, nº 500 - Jundiaí', 14, yPos);
   yPos += 4;
-  doc.text('neste ato representada na forma de seu contrato social.', 14, yPos);
+  doc.text('Anápolis/GO - CEP: 75070-400', 14, yPos);
+  yPos += 4;
+  doc.text('E-mail: financeiro@competisistemas.com.br | Telefone: (62) 3098-2122', 14, yPos);
+  yPos += 4;
+  doc.text('Neste ato representada na forma de seu contrato social.', 14, yPos);
   yPos += 10;
 
   // Dados do Contratante
@@ -228,8 +232,13 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   doc.text(clause1Lines, 14, yPos);
   yPos += clause1Lines.length * 4 + 8;
 
+  // Margem de rodapé mínima de 1cm (aproximadamente 10mm = ~28 pontos do topo da página 297mm)
+  const pageHeight = doc.internal.pageSize.height;
+  const footerMargin = 20; // ~1cm de margem inferior
+  const maxY = pageHeight - footerMargin;
+
   // CLÁUSULA 2 - PRODUTOS (com tabela)
-  if (yPos > 200) {
+  if (yPos > maxY - 60) {
     doc.addPage();
     yPos = addHeader(doc, logo, pageWidth);
   }
@@ -310,7 +319,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   yPos += 5;
 
   // CLÁUSULA 3 - VIGÊNCIA
-  if (yPos > 240) {
+  if (yPos > maxY - 40) {
     doc.addPage();
     yPos = addHeader(doc, logo, pageWidth);
   }
@@ -328,7 +337,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   yPos += clause3Lines.length * 4 + 8;
 
   // CLÁUSULA 4 - MENSALIDADES
-  if (yPos > 240) {
+  if (yPos > maxY - 40) {
     doc.addPage();
     yPos = addHeader(doc, logo, pageWidth);
   }
@@ -347,7 +356,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 
   // Demais cláusulas (5 a 12)
   for (let i = 4; i < CONTRACT_CLAUSES.length; i++) {
-    if (yPos > 240) {
+    if (yPos > maxY - 40) {
       doc.addPage();
       yPos = addHeader(doc, logo, pageWidth);
     }
@@ -365,7 +374,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 
   // Cláusula especial de desconto (se houver desconto)
   if (hasDiscount) {
-    if (yPos > 240) {
+    if (yPos > maxY - 40) {
       doc.addPage();
       yPos = addHeader(doc, logo, pageWidth);
     }
@@ -382,7 +391,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   }
 
   // Assinaturas
-  if (yPos > 220) {
+  if (yPos > maxY - 60) {
     doc.addPage();
     yPos = addHeader(doc, logo, pageWidth);
   }
