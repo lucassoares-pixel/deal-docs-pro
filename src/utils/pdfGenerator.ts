@@ -150,7 +150,9 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   // Título
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS SaaS', pageWidth / 2, yPos, { align: 'center' });
+  doc.text('CONTRATO DE LICENÇA DE USO DE SOFTWARE (SaaS)', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 6;
+  doc.text('E PRESTAÇÃO DE SERVIÇOS', pageWidth / 2, yPos, { align: 'center' });
   yPos += 10;
 
   doc.setFontSize(10);
@@ -159,6 +161,23 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   yPos += 5;
   doc.text(`Data: ${format(new Date(contract.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}`, pageWidth / 2, yPos, { align: 'center' });
   yPos += 12;
+
+  // Dados da CONTRATADA (fixos)
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CONTRATADA:', 14, yPos);
+  yPos += 6;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('COMPETI SISTEMAS LTDA, pessoa jurídica de direito privado, inscrita no CNPJ nº 13.885.290/0001-40,', 14, yPos);
+  yPos += 4;
+  doc.text('com sede na Av. JK, Quadra 19, Lote 01, Sala 01, Pavimento 04, nº 500, Bairro Jundiaí, Anápolis-GO,', 14, yPos);
+  yPos += 4;
+  doc.text('CEP 75070-400, e-mail: financeiro@competisistemas.com.br, telefone: (62) 3098-2122,', 14, yPos);
+  yPos += 4;
+  doc.text('neste ato representada na forma de seu contrato social.', 14, yPos);
+  yPos += 10;
 
   // Dados do Contratante
   doc.setFontSize(11);
@@ -190,6 +209,14 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   doc.text(`CPF: ${contract.legal_representative.cpf}`, 14, yPos);
   yPos += 10;
 
+  // Texto introdutório
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  const introText = 'As partes acima identificadas celebram o presente CONTRATO DE LICENÇA DE USO DE SOFTWARE (SaaS) E PRESTAÇÃO DE SERVIÇOS, que se regerá pelas cláusulas e condições seguintes:';
+  const introLines = doc.splitTextToSize(introText, pageWidth - 28);
+  doc.text(introLines, 14, yPos);
+  yPos += introLines.length * 4 + 8;
+
   // CLÁUSULA 1 - DO OBJETO
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
@@ -215,13 +242,6 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   // Verificar se há desconto para adicionar nota
   const hasDiscount = contract.products.some(p => p.discount_percentage > 0) || 
     (contract.recurring_total_discounted < contract.recurring_total_full);
-  
-  if (hasDiscount) {
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.text(`*FOI CONCEDIDO UM DESCONTO SOBRE O VALOR DA MENSALIDADE, QUE DEVERÁ TER A COBRANÇA DE ${formatCurrency(contract.recurring_total_discounted)} NO CNPJ POR PERÍODO INDETERMINADO.`, 14, yPos, { maxWidth: pageWidth - 28 });
-    yPos += 8;
-  }
 
   // Tabela de produtos com novas colunas
   autoTable(doc, {
@@ -275,7 +295,19 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
     }
   });
 
-  yPos = (doc as any).lastAutoTable.finalY + 10;
+  yPos = (doc as any).lastAutoTable.finalY + 5;
+
+  // Condição especial de desconto (junto da tabela)
+  if (hasDiscount) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    const discountNote = `*FOI CONCEDIDO UM DESCONTO SOBRE O VALOR DA MENSALIDADE, QUE DEVERÁ TER A COBRANÇA DE ${formatCurrency(contract.recurring_total_discounted)} NO CNPJ POR PERÍODO INDETERMINADO.`;
+    const discountNoteLines = doc.splitTextToSize(discountNote, pageWidth - 28);
+    doc.text(discountNoteLines, 14, yPos);
+    yPos += discountNoteLines.length * 3 + 5;
+  }
+
+  yPos += 5;
 
   // CLÁUSULA 3 - VIGÊNCIA
   if (yPos > 240) {
