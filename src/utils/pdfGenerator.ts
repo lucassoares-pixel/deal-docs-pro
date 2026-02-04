@@ -223,29 +223,56 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
     yPos += 8;
   }
 
-  // Tabela de produtos
+  // Tabela de produtos com novas colunas
   autoTable(doc, {
     startY: yPos,
-    head: [['PRODUTO', 'QTD', 'VALOR ADESÃO', 'VALOR MENSALIDADE', 'FIDELIDADE']],
-    body: contract.products.map(p => [
-      p.product.name,
-      p.quantity.toString(),
-      formatCurrency((p.product.setup_price || 0) * p.quantity),
-      formatCurrency(p.discounted_price),
-      `[${p.product.fidelity_months} Meses]`
-    ]),
+    head: [['PRODUTO', 'IMPLANTAÇÃO', 'MENSALIDADE', '% DESC', 'VALOR C/ DESC', 'VALIDADE DESC', 'FIDELIDADE']],
+    body: contract.products.map(p => {
+      // Determinar validade do desconto
+      let discountValidity = '-';
+      if (p.discount_percentage > 0) {
+        if (p.discount_period_type === 'indefinite') {
+          discountValidity = 'Indeterminado';
+        } else if (p.discount_period_type === 'months' && p.discount_months) {
+          discountValidity = `${p.discount_months} meses`;
+        } else if (p.discount_period_type === 'fixed_date' && p.discount_end_date) {
+          discountValidity = p.discount_end_date;
+        }
+      }
+      
+      return [
+        p.product.name,
+        formatCurrency((p.custom_enrollment_price ?? p.product.setup_price ?? 0) * p.quantity),
+        formatCurrency(p.full_price),
+        p.discount_percentage > 0 ? `${p.discount_percentage}%` : '-',
+        formatCurrency(p.discounted_price),
+        discountValidity,
+        `${p.product.fidelity_months} Meses`
+      ];
+    }),
     foot: [[
       'TOTAL', 
-      '', 
       formatCurrency(contract.setup_total), 
+      formatCurrency(contract.recurring_total_full),
+      '',
       formatCurrency(contract.recurring_total_discounted), 
-      `[${contract.fidelity_months} Meses]`
+      '',
+      `${contract.fidelity_months} Meses`
     ]],
     theme: 'striped',
-    headStyles: { fillColor: [34, 52, 79], textColor: 255, fontSize: 8 },
-    bodyStyles: { fontSize: 8 },
-    footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', fontSize: 8 },
+    headStyles: { fillColor: [34, 52, 79], textColor: 255, fontSize: 7 },
+    bodyStyles: { fontSize: 7 },
+    footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', fontSize: 7 },
     margin: { left: 14, right: 14 },
+    columnStyles: {
+      0: { cellWidth: 35 },
+      1: { cellWidth: 22, halign: 'right' },
+      2: { cellWidth: 24, halign: 'right' },
+      3: { cellWidth: 15, halign: 'center' },
+      4: { cellWidth: 26, halign: 'right' },
+      5: { cellWidth: 28, halign: 'center' },
+      6: { cellWidth: 22, halign: 'center' }
+    }
   });
 
   yPos = (doc as any).lastAutoTable.finalY + 10;
