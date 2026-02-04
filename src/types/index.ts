@@ -58,6 +58,10 @@ export interface ContractProduct {
   discount_percentage: number;
   discounted_price: number;
   full_price: number;
+  custom_enrollment_price?: number | null;
+  discount_period_type?: string | null;
+  discount_months?: number | null;
+  discount_end_date?: string | null;
 }
 
 export interface DiscountLog {
