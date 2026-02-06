@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN cas_price numeric DEFAULT NULL;

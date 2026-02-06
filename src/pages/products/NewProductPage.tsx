@@ -30,6 +30,7 @@ export default function NewProductPage() {
         base_price: parseFloat(formData.base_price),
         setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
         cost_price: isAdmin && formData.cost_price ? parseFloat(formData.cost_price) : null,
+        cas_price: isAdmin && formData.cas_price ? parseFloat(formData.cas_price) : null,
         allow_discount: formData.allow_discount,
         max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
         fidelity_months: parseInt(formData.fidelity_months) || 0,

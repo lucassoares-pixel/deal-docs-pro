@@ -20,6 +20,7 @@ export interface ProductFormData {
   base_price: string;
   setup_price: string;
   cost_price: string;
+  cas_price: string;
   allow_discount: boolean;
   max_discount_percentage: string;
   fidelity_months: string;
@@ -44,6 +45,7 @@ const defaultFormData: ProductFormData = {
   base_price: '',
   setup_price: '',
   cost_price: '',
+  cas_price: '',
   allow_discount: true,
   max_discount_percentage: '20',
   fidelity_months: '12',
@@ -225,18 +227,32 @@ export function ProductForm({
           </div>
 
           {isAdmin && (
-            <div>
-              <Label className="form-label">Valor de Custo (R$)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.cost_price}
-                onChange={handleChange('cost_price')}
-                placeholder="0,00"
-              />
-              <p className="form-helper">Visível apenas para administradores</p>
-            </div>
+            <>
+              <div>
+                <Label className="form-label">Valor de Custo (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.cost_price}
+                  onChange={handleChange('cost_price')}
+                  placeholder="0,00"
+                />
+                <p className="form-helper">Visível apenas para administradores</p>
+              </div>
+              <div>
+                <Label className="form-label">CAS - Custo de Aquisição (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.cas_price}
+                  onChange={handleChange('cas_price')}
+                  placeholder="0,00"
+                />
+                <p className="form-helper">Preço pago pelo módulo/sistema ao fornecedor</p>
+              </div>
+            </>
           )}
         </div>
       </div>
