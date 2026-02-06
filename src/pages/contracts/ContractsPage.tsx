@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateRangeFilter, useDateRangeFilter } from '@/components/ui/date-range-filter';
 import { useContracts, ContractWithDetails } from '@/hooks/useContracts';
 import { generateClientSheetPDF, generateContractPDF } from '@/utils/pdfGenerator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -20,8 +21,11 @@ export default function ContractsPage() {
   const navigate = useNavigate();
   const { contracts, loading, updateContractStatus, deleteContract, toggleSigned } = useContracts();
   const [search, setSearch] = useState('');
+  const { preset, setPreset, dateRange, setDateRange, filterByDate } = useDateRangeFilter('month');
 
-  const filteredContracts = contracts.filter(contract => 
+  const dateFilteredContracts = filterByDate(contracts, (c) => c.created_at);
+
+  const filteredContracts = dateFilteredContracts.filter(contract => 
     contract.client?.company_name?.toLowerCase().includes(search.toLowerCase()) ||
     contract.client?.trade_name?.toLowerCase().includes(search.toLowerCase())
   );
@@ -298,7 +302,7 @@ export default function ContractsPage() {
     <AppLayout>
       <PageHeader 
         title="Contratos"
-        subtitle={`${contracts.length} contrato(s) no sistema`}
+        subtitle={`${filteredContracts.length} contrato(s) no período`}
         actions={
           <Button onClick={() => navigate('/contracts/new')} className="btn-secondary">
             <Plus className="w-4 h-4" />
@@ -306,6 +310,16 @@ export default function ContractsPage() {
           </Button>
         }
       />
+
+      {/* Date Filter */}
+      <div className="mb-4">
+        <DateRangeFilter
+          value={dateRange}
+          onChange={setDateRange}
+          preset={preset}
+          onPresetChange={setPreset}
+        />
+      </div>
 
       <div className="card-elevated">
         {/* Search */}
