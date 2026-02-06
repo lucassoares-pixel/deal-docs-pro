@@ -7,16 +7,19 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Package, Save, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
 
 type BillingType = 'recurring' | 'one_time';
+type ProductType = 'primary' | 'secondary';
 
 export interface ProductFormData {
   name: string;
+  sku: string;
   description: string;
   billing_type: BillingType;
+  product_type: ProductType;
   base_price: string;
   setup_price: string;
+  cost_price: string;
   allow_discount: boolean;
   max_discount_percentage: string;
   fidelity_months: string;
@@ -29,14 +32,18 @@ interface ProductFormProps {
   onCancel: () => void;
   isSubmitting: boolean;
   submitLabel: string;
+  isAdmin?: boolean;
 }
 
 const defaultFormData: ProductFormData = {
   name: '',
+  sku: '',
   description: '',
   billing_type: 'recurring',
+  product_type: 'primary',
   base_price: '',
   setup_price: '',
+  cost_price: '',
   allow_discount: true,
   max_discount_percentage: '20',
   fidelity_months: '12',
@@ -48,7 +55,8 @@ export function ProductForm({
   onSubmit, 
   onCancel, 
   isSubmitting, 
-  submitLabel 
+  submitLabel,
+  isAdmin = false,
 }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -100,7 +108,7 @@ export function ProductForm({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
+          <div>
             <Label className="form-label">Nome do Produto *</Label>
             <Input
               value={formData.name}
@@ -109,6 +117,16 @@ export function ProductForm({
               className={errors.name ? 'border-destructive' : ''}
             />
             {errors.name && <p className="form-error">{errors.name}</p>}
+          </div>
+
+          <div>
+            <Label className="form-label">SKU</Label>
+            <Input
+              value={formData.sku}
+              onChange={handleChange('sku')}
+              placeholder="Ex: CRM-PRO-001"
+            />
+            <p className="form-helper">Código de identificação do produto</p>
           </div>
 
           <div className="md:col-span-2">
@@ -141,6 +159,27 @@ export function ProductForm({
               {formData.billing_type === 'recurring' 
                 ? 'Cobrado mensalmente na fatura do cliente'
                 : 'Cobrado uma única vez no início do contrato'}
+            </p>
+          </div>
+
+          <div>
+            <Label className="form-label">Tipo de Módulo *</Label>
+            <Select
+              value={formData.product_type}
+              onValueChange={(value: ProductType) => setFormData(prev => ({ ...prev, product_type: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="primary">Módulo Principal</SelectItem>
+                <SelectItem value="secondary">Módulo Secundário</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="form-helper">
+              {formData.product_type === 'primary'
+                ? 'Módulo principal do sistema'
+                : 'Módulo complementar/adicional'}
             </p>
           </div>
 
@@ -184,6 +223,21 @@ export function ProductForm({
             />
             <p className="form-helper">Período mínimo de contratação</p>
           </div>
+
+          {isAdmin && (
+            <div>
+              <Label className="form-label">Valor de Custo (R$)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.cost_price}
+                onChange={handleChange('cost_price')}
+                placeholder="0,00"
+              />
+              <p className="form-helper">Visível apenas para administradores</p>
+            </div>
+          )}
         </div>
       </div>
 

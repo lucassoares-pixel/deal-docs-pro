@@ -8,14 +8,17 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useProducts } from '@/hooks/useProducts';
+import { useAuth } from '@/context/AuthContext';
 import { Tables } from '@/integrations/supabase/types';
-import { Package, Plus, Search, DollarSign, Percent, Calendar, Loader2 } from 'lucide-react';
+import { Package, Plus, Search, DollarSign, Percent, Calendar, Loader2, Tag } from 'lucide-react';
 
 type Product = Tables<'products'>;
 
 export default function ProductsPage() {
   const navigate = useNavigate();
   const { products, loading } = useProducts();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [search, setSearch] = useState('');
 
   const filteredProducts = products.filter(product => 
@@ -41,7 +44,14 @@ export default function ProductsPage() {
           </div>
           <div>
             <p className="font-medium text-foreground">{product.name}</p>
-            <p className="text-sm text-muted-foreground line-clamp-1">{product.description}</p>
+            <div className="flex items-center gap-2">
+              {(product as any).sku && (
+                <span className="text-xs text-muted-foreground font-mono">{(product as any).sku}</span>
+              )}
+              <span className={(product as any).product_type === 'primary' ? 'badge-info text-xs' : 'badge-warning text-xs'}>
+                {(product as any).product_type === 'primary' ? 'Principal' : 'Secundário'}
+              </span>
+            </div>
           </div>
         </div>
       ),
@@ -106,6 +116,15 @@ export default function ProductsPage() {
         </div>
       ),
     },
+    ...(isAdmin ? [{
+      key: 'cost',
+      header: 'Custo',
+      render: (product: Product) => (
+        <span className="text-muted-foreground">
+          {(product as any).cost_price ? formatCurrency(Number((product as any).cost_price)) : '-'}
+        </span>
+      ),
+    }] : []),
     {
       key: 'status',
       header: 'Status',
