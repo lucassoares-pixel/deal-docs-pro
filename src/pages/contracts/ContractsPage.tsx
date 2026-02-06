@@ -9,14 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useContracts, ContractWithDetails } from '@/hooks/useContracts';
 import { generateClientSheetPDF, generateContractPDF } from '@/utils/pdfGenerator';
-import { FileDown, FileText, Plus, Search, Calendar, Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { FileDown, FileText, Plus, Search, Calendar, Loader2, Trash2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 export default function ContractsPage() {
   const navigate = useNavigate();
-  const { contracts, loading } = useContracts();
+  const { contracts, loading, updateContractStatus, deleteContract } = useContracts();
   const [search, setSearch] = useState('');
 
   const filteredContracts = contracts.filter(contract => 
@@ -79,6 +80,17 @@ export default function ContractsPage() {
     } catch (e: any) {
       toast.error(e?.message || 'Erro ao gerar PDF da ficha do cliente');
     }
+  };
+
+  const handleCancelContract = async (contract: ContractWithDetails) => {
+    const result = await updateContractStatus(contract.id, 'cancelled');
+    if (result) {
+      toast.success('Contrato cancelado com sucesso');
+    }
+  };
+
+  const handleDeleteContract = async (contract: ContractWithDetails) => {
+    await deleteContract(contract.id);
   };
 
   const columns = [
@@ -150,14 +162,14 @@ export default function ContractsPage() {
     },
     {
       key: 'actions',
-      header: 'PDFs',
+      header: 'Ações',
       className: 'text-right',
       render: (contract: ContractWithDetails) => (
         <div className="flex justify-end gap-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleDownloadContractPDF(contract)}
+            onClick={(e) => { e.stopPropagation(); handleDownloadContractPDF(contract); }}
           >
             <FileDown className="w-4 h-4" />
             Contrato
@@ -165,11 +177,71 @@ export default function ContractsPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleDownloadClientSheetPDF(contract)}
+            onClick={(e) => { e.stopPropagation(); handleDownloadClientSheetPDF(contract); }}
           >
             <FileDown className="w-4 h-4" />
             Ficha
           </Button>
+          {contract.status === 'active' && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-warning hover:text-warning"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <XCircle className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Cancelar contrato?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    O contrato de {contract.client?.trade_name} será marcado como cancelado. Ele não aparecerá mais nos contratos ativos e não será contabilizado na receita recorrente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Voltar</AlertDialogCancel>
+                  <AlertDialogAction 
+                    className="bg-warning text-warning-foreground hover:bg-warning/90"
+                    onClick={() => handleCancelContract(contract)}
+                  >
+                    Cancelar Contrato
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação é irreversível. O contrato de {contract.client?.trade_name} e todos os dados associados serão permanentemente excluídos.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                <AlertDialogAction 
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => handleDeleteContract(contract)}
+                >
+                  Excluir Permanentemente
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       ),
     },

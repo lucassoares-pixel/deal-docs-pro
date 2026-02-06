@@ -146,8 +146,60 @@ export function useContracts() {
       return null;
     }
 
+    if (user) {
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        user_name: profile?.name || user.email || 'Unknown',
+        action: status === 'cancelled' ? 'cancel' : 'update',
+        entity_type: 'contract',
+        entity_id: id,
+        new_value: { status },
+        description: status === 'cancelled' ? 'Contrato cancelado' : `Status do contrato alterado para ${status}`,
+      });
+    }
+
     await fetchContracts();
     return data;
+  };
+
+  const deleteContract = async (id: string) => {
+    // Delete related records first
+    await supabase.from('discount_logs').delete().eq('contract_id', id);
+    await supabase.from('extra_discount_logs').delete().eq('contract_id', id);
+    await supabase.from('contract_products').delete().eq('contract_id', id);
+
+    const { error } = await supabase
+      .from('contracts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        title: 'Erro ao excluir contrato',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (user) {
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        user_name: profile?.name || user.email || 'Unknown',
+        action: 'delete',
+        entity_type: 'contract',
+        entity_id: id,
+        new_value: null,
+        description: 'Contrato excluído',
+      });
+    }
+
+    await fetchContracts();
+    toast({
+      title: 'Contrato excluído',
+      description: 'O contrato foi removido com sucesso.',
+    });
+    return true;
   };
 
   const getContractById = (id: string) => contracts.find(c => c.id === id);
@@ -160,6 +212,7 @@ export function useContracts() {
     loading,
     addContract,
     updateContractStatus,
+    deleteContract,
     getContractById,
     getContractsByClientId,
     refetch: fetchContracts,
