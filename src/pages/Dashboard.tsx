@@ -33,7 +33,9 @@ export default function Dashboard() {
 
   // Calculate stats
   const activeContracts = contracts.filter(c => c.status === 'active');
+  const signedContracts = activeContracts.filter(c => (c as any).signed === true);
   const totalRecurringRevenue = activeContracts.reduce((acc, c) => acc + Number(c.recurring_total_discounted), 0);
+  const confirmedRevenue = signedContracts.reduce((acc, c) => acc + Number(c.recurring_total_discounted), 0);
   
   const recentContracts = contracts.slice(0, 5);
   const recentLogs = auditLogs.slice(0, 5);
@@ -84,13 +86,13 @@ export default function Dashboard() {
         <StatCard
           title="Contratos Ativos"
           value={activeContracts.length}
-          subtitle={`de ${contracts.length} total`}
+          subtitle={`${signedContracts.length} assinado(s) de ${contracts.length} total`}
           icon={FileText}
         />
         <StatCard
           title="Receita Recorrente"
           value={formatCurrency(totalRecurringRevenue)}
-          subtitle="mensal"
+          subtitle={`${formatCurrency(confirmedRevenue)} confirmada (assinados)`}
           icon={DollarSign}
         />
       </div>

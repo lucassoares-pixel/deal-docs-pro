@@ -202,6 +202,28 @@ export function useContracts() {
     return true;
   };
 
+  const toggleSigned = async (id: string, signed: boolean) => {
+    const { error } = await supabase
+      .from('contracts')
+      .update({ signed } as any)
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        title: 'Erro ao atualizar assinatura',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    await fetchContracts();
+    toast({
+      title: signed ? 'Contrato assinado' : 'Assinatura removida',
+      description: signed ? 'Receita confirmada com contrato assinado.' : 'Marcação de assinatura removida.',
+    });
+  };
+
   const getContractById = (id: string) => contracts.find(c => c.id === id);
 
   const getContractsByClientId = (clientId: string) => 
@@ -213,6 +235,7 @@ export function useContracts() {
     addContract,
     updateContractStatus,
     deleteContract,
+    toggleSigned,
     getContractById,
     getContractsByClientId,
     refetch: fetchContracts,
