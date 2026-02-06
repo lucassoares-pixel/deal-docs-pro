@@ -156,7 +156,7 @@ export function ProductForm({
           </div>
 
           <div>
-            <Label className="form-label">Marca</Label>
+            <Label className="form-label">Fornecedor</Label>
             <Input
               value={formData.brand}
               onChange={handleChange('brand')}
