@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
+import { DateRangeFilter, useDateRangeFilter } from '@/components/ui/date-range-filter';
 import { useClients } from '@/hooks/useClients';
 import { useProducts } from '@/hooks/useProducts';
 import { useContracts } from '@/hooks/useContracts';
@@ -29,15 +30,20 @@ export default function Dashboard() {
   const { contracts, loading: loadingContracts } = useContracts();
   const { auditLogs, loading: loadingAudit } = useAuditLogs();
 
+  const { preset, setPreset, dateRange, setDateRange, filterByDate } = useDateRangeFilter('month');
+
   const loading = loadingClients || loadingProducts || loadingContracts || loadingAudit;
 
-  // Calculate stats
-  const activeContracts = contracts.filter(c => c.status === 'active');
+  // Filter contracts by date
+  const filteredContracts = filterByDate(contracts, (c) => c.created_at);
+
+  // Calculate stats from filtered contracts
+  const activeContracts = filteredContracts.filter(c => c.status === 'active');
   const signedContracts = activeContracts.filter(c => (c as any).signed === true);
   const totalRecurringRevenue = activeContracts.reduce((acc, c) => acc + Number(c.recurring_total_discounted), 0);
   const confirmedRevenue = signedContracts.reduce((acc, c) => acc + Number(c.recurring_total_discounted), 0);
   
-  const recentContracts = contracts.slice(0, 5);
+  const recentContracts = filteredContracts.slice(0, 5);
   const recentLogs = auditLogs.slice(0, 5);
 
   const formatCurrency = (value: number) => {
@@ -70,6 +76,16 @@ export default function Dashboard() {
         }
       />
 
+      {/* Date Filter */}
+      <div className="mb-6">
+        <DateRangeFilter
+          value={dateRange}
+          onChange={setDateRange}
+          preset={preset}
+          onPresetChange={setPreset}
+        />
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
@@ -86,7 +102,7 @@ export default function Dashboard() {
         <StatCard
           title="Contratos Ativos"
           value={activeContracts.length}
-          subtitle={`${signedContracts.length} assinado(s) de ${contracts.length} total`}
+          subtitle={`${signedContracts.length} assinado(s) de ${filteredContracts.length} total`}
           icon={FileText}
         />
         <StatCard
@@ -109,7 +125,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h2 className="font-semibold text-foreground">Contratos Recentes</h2>
-                  <p className="text-sm text-muted-foreground">Últimos contratos criados</p>
+                  <p className="text-sm text-muted-foreground">No período selecionado</p>
                 </div>
               </div>
               <Button 
@@ -126,7 +142,7 @@ export default function Dashboard() {
           <div className="divide-y divide-border">
             {recentContracts.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground">
-                Nenhum contrato encontrado
+                Nenhum contrato no período
               </div>
             ) : (
               recentContracts.map((contract) => (
