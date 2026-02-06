@@ -22,6 +22,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
+  { name: 'Usuários', href: '/users', icon: Users },
   { name: 'Histórico', href: '/audit', icon: History },
 ];
 

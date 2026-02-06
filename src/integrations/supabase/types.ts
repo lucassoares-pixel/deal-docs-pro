@@ -453,32 +453,74 @@ export type Database = {
       profiles: {
         Row: {
           active: boolean
+          cpf: string | null
           created_at: string
           email: string
           id: string
           name: string
+          phone: string | null
           role: string
           user_id: string
         }
         Insert: {
           active?: boolean
+          cpf?: string | null
           created_at?: string
           email: string
           id?: string
           name: string
+          phone?: string | null
           role?: string
           user_id: string
         }
         Update: {
           active?: boolean
+          cpf?: string | null
           created_at?: string
           email?: string
           id?: string
           name?: string
+          phone?: string | null
           role?: string
           user_id?: string
         }
         Relationships: []
+      }
+      supervisor_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          supervisor_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          supervisor_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          supervisor_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_assignments_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisor_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
