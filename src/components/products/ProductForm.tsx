@@ -15,6 +15,9 @@ export interface ProductFormData {
   name: string;
   sku: string;
   description: string;
+  category: string;
+  product_group: string;
+  brand: string;
   billing_type: BillingType;
   product_type: ProductType;
   base_price: string;
@@ -40,6 +43,9 @@ const defaultFormData: ProductFormData = {
   name: '',
   sku: '',
   description: '',
+  category: '',
+  product_group: '',
+  brand: '',
   billing_type: 'recurring',
   product_type: 'primary',
   base_price: '',
@@ -129,6 +135,33 @@ export function ProductForm({
               placeholder="Ex: CRM-PRO-001"
             />
             <p className="form-helper">Código de identificação do produto</p>
+          </div>
+
+          <div>
+            <Label className="form-label">Categoria</Label>
+            <Input
+              value={formData.category}
+              onChange={handleChange('category')}
+              placeholder="Ex: Software, Consultoria"
+            />
+          </div>
+
+          <div>
+            <Label className="form-label">Grupo</Label>
+            <Input
+              value={formData.product_group}
+              onChange={handleChange('product_group')}
+              placeholder="Ex: ERP, CRM"
+            />
+          </div>
+
+          <div>
+            <Label className="form-label">Marca</Label>
+            <Input
+              value={formData.brand}
+              onChange={handleChange('brand')}
+              placeholder="Ex: Competi"
+            />
           </div>
 
           <div className="md:col-span-2">
