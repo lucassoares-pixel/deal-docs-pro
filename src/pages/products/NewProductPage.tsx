@@ -5,12 +5,15 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { ProductForm, ProductFormData } from '@/components/products/ProductForm';
 import { useProducts } from '@/hooks/useProducts';
+import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function NewProductPage() {
   const navigate = useNavigate();
   const { addProduct } = useProducts();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (formData: ProductFormData) => {
@@ -19,16 +22,19 @@ export default function NewProductPage() {
     try {
       const result = await addProduct({
         name: formData.name,
+        sku: formData.sku || null,
         description: formData.description,
         billing_type: formData.billing_type,
+        product_type: formData.product_type,
         recurring_period: formData.billing_type === 'recurring' ? 'monthly' : null,
         base_price: parseFloat(formData.base_price),
         setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
+        cost_price: isAdmin && formData.cost_price ? parseFloat(formData.cost_price) : null,
         allow_discount: formData.allow_discount,
         max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
         fidelity_months: parseInt(formData.fidelity_months) || 0,
         active: formData.active,
-      });
+      } as any);
 
       if (result) {
         navigate('/products');
@@ -58,6 +64,7 @@ export default function NewProductPage() {
         onCancel={() => navigate('/products')}
         isSubmitting={isSubmitting}
         submitLabel="Salvar Produto"
+        isAdmin={isAdmin}
       />
     </AppLayout>
   );

@@ -381,6 +381,7 @@ export type Database = {
           allow_discount: boolean
           base_price: number
           billing_type: string
+          cost_price: number | null
           created_at: string
           description: string
           discount_end_date: string | null
@@ -391,8 +392,10 @@ export type Database = {
           implementation_price: number | null
           max_discount_percentage: number
           name: string
+          product_type: string
           recurring_period: string | null
           setup_price: number | null
+          sku: string | null
           updated_at: string
           user_id: string
         }
@@ -401,6 +404,7 @@ export type Database = {
           allow_discount?: boolean
           base_price: number
           billing_type: string
+          cost_price?: number | null
           created_at?: string
           description: string
           discount_end_date?: string | null
@@ -411,8 +415,10 @@ export type Database = {
           implementation_price?: number | null
           max_discount_percentage?: number
           name: string
+          product_type?: string
           recurring_period?: string | null
           setup_price?: number | null
+          sku?: string | null
           updated_at?: string
           user_id: string
         }
@@ -421,6 +427,7 @@ export type Database = {
           allow_discount?: boolean
           base_price?: number
           billing_type?: string
+          cost_price?: number | null
           created_at?: string
           description?: string
           discount_end_date?: string | null
@@ -431,8 +438,10 @@ export type Database = {
           implementation_price?: number | null
           max_discount_percentage?: number
           name?: string
+          product_type?: string
           recurring_period?: string | null
           setup_price?: number | null
+          sku?: string | null
           updated_at?: string
           user_id?: string
         }
