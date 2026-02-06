@@ -117,11 +117,11 @@ export default function ProductsPage() {
       ),
     },
     ...(isAdmin ? [{
-      key: 'cost',
-      header: 'Custo',
+      key: 'cas',
+      header: 'CAS',
       render: (product: Product) => (
         <span className="text-muted-foreground">
-          {(product as any).cost_price ? formatCurrency(Number((product as any).cost_price)) : '-'}
+          {(product as any).cas_price ? formatCurrency(Number((product as any).cas_price)) : '-'}
         </span>
       ),
     }] : []),
