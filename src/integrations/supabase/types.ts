@@ -182,6 +182,7 @@ export type Database = {
           recurring_total_discounted: number
           recurring_total_full: number
           setup_total: number
+          signed: boolean
           start_date: string
           status: string
           updated_at: string
@@ -201,6 +202,7 @@ export type Database = {
           recurring_total_discounted?: number
           recurring_total_full?: number
           setup_total?: number
+          signed?: boolean
           start_date: string
           status?: string
           updated_at?: string
@@ -220,6 +222,7 @@ export type Database = {
           recurring_total_discounted?: number
           recurring_total_full?: number
           setup_total?: number
+          signed?: boolean
           start_date?: string
           status?: string
           updated_at?: string

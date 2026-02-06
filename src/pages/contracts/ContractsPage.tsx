@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useContracts, ContractWithDetails } from '@/hooks/useContracts';
 import { generateClientSheetPDF, generateContractPDF } from '@/utils/pdfGenerator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -17,7 +18,7 @@ import { toast } from 'sonner';
 
 export default function ContractsPage() {
   const navigate = useNavigate();
-  const { contracts, loading, updateContractStatus, deleteContract } = useContracts();
+  const { contracts, loading, updateContractStatus, deleteContract, toggleSigned } = useContracts();
   const [search, setSearch] = useState('');
 
   const filteredContracts = contracts.filter(contract => 
@@ -151,6 +152,18 @@ export default function ContractsPage() {
         <span className="text-muted-foreground">
           {contract.fidelity_months} meses
         </span>
+      ),
+    },
+    {
+      key: 'signed',
+      header: 'Assinado',
+      render: (contract: ContractWithDetails) => (
+        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={(contract as any).signed === true}
+            onCheckedChange={() => toggleSigned(contract.id, !(contract as any).signed)}
+          />
+        </div>
       ),
     },
     {
