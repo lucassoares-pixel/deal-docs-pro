@@ -381,6 +381,7 @@ export type Database = {
           allow_discount: boolean
           base_price: number
           billing_type: string
+          cas_price: number | null
           cost_price: number | null
           created_at: string
           description: string
@@ -404,6 +405,7 @@ export type Database = {
           allow_discount?: boolean
           base_price: number
           billing_type: string
+          cas_price?: number | null
           cost_price?: number | null
           created_at?: string
           description: string
@@ -427,6 +429,7 @@ export type Database = {
           allow_discount?: boolean
           base_price?: number
           billing_type?: string
+          cas_price?: number | null
           cost_price?: number | null
           created_at?: string
           description?: string
