@@ -1,12 +1,12 @@
 import { cn } from '@/lib/utils';
 
 interface StatusBadgeProps {
-  status: 'active' | 'inactive' | 'pending' | 'draft' | 'cancelled' | 'expired' | 'success' | 'warning' | 'error';
+  status: 'active' | 'inactive' | 'pending' | 'draft' | 'cancelled' | 'expired' | 'success' | 'warning' | 'error' | 'info';
   label?: string;
   className?: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { class: string; label: string }> = {
   active: { class: 'badge-success', label: 'Ativo' },
   inactive: { class: 'badge-destructive', label: 'Inativo' },
   pending: { class: 'badge-warning', label: 'Pendente' },
@@ -16,6 +16,7 @@ const statusConfig = {
   success: { class: 'badge-success', label: 'Sucesso' },
   warning: { class: 'badge-warning', label: 'Atenção' },
   error: { class: 'badge-destructive', label: 'Erro' },
+  info: { class: 'badge-info', label: 'Info' },
 };
 
 export function StatusBadge({ status, label, className }: StatusBadgeProps) {
