@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Package, Save, Loader2 } from 'lucide-react';
+import { useSelectionFields } from '@/hooks/useSelectionFields';
 
 type BillingType = 'recurring' | 'one_time';
 type ProductType = 'primary' | 'secondary';
@@ -74,6 +75,10 @@ export function ProductForm({
 }: ProductFormProps) {
   const [formData, setFormData] = useState<ProductFormData>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { getByType } = useSelectionFields();
+  const brands = getByType('brand');
+  const categories = getByType('category');
+  const productGroups = getByType('product_group');
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -151,29 +156,53 @@ export function ProductForm({
 
           <div>
             <Label className="form-label">Categoria</Label>
-            <Input
+            <Select
               value={formData.category}
-              onChange={handleChange('category')}
-              placeholder="Ex: Software, Consultoria"
-            />
+              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(c => (
+                  <SelectItem key={c.id} value={c.value}>{c.value}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label className="form-label">Grupo</Label>
-            <Input
+            <Select
               value={formData.product_group}
-              onChange={handleChange('product_group')}
-              placeholder="Ex: ERP, CRM"
-            />
+              onValueChange={(value) => setFormData(prev => ({ ...prev, product_group: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o grupo" />
+              </SelectTrigger>
+              <SelectContent>
+                {productGroups.map(g => (
+                  <SelectItem key={g.id} value={g.value}>{g.value}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <Label className="form-label">Fornecedor</Label>
-            <Input
+            <Select
               value={formData.brand}
-              onChange={handleChange('brand')}
-              placeholder="Ex: Competi"
-            />
+              onValueChange={(value) => setFormData(prev => ({ ...prev, brand: value }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o fornecedor" />
+              </SelectTrigger>
+              <SelectContent>
+                {brands.map(b => (
+                  <SelectItem key={b.id} value={b.value}>{b.value}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="md:col-span-2">

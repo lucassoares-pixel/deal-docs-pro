@@ -510,6 +510,33 @@ export type Database = {
         }
         Relationships: []
       }
+      selection_fields: {
+        Row: {
+          active: boolean
+          created_at: string
+          field_type: string
+          id: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          field_type: string
+          id?: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          field_type?: string
+          id?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       supervisor_assignments: {
         Row: {
           created_at: string

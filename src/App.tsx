@@ -18,6 +18,7 @@ import EditContractPage from "./pages/contracts/EditContractPage";
 import AuditPage from "./pages/audit/AuditPage";
 import UsersPage from "./pages/users/UsersPage";
 import AuthPage from "./pages/auth/AuthPage";
+import SelectionFieldsPage from "./pages/settings/SelectionFieldsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/contracts/:id" element={<ProtectedRoute><EditContractPage /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+            <Route path="/settings/fields" element={<ProtectedRoute><SelectionFieldsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
