@@ -14,6 +14,7 @@ import NewProductPage from "./pages/products/NewProductPage";
 import EditProductPage from "./pages/products/EditProductPage";
 import ContractsPage from "./pages/contracts/ContractsPage";
 import ContractBuilderPage from "./pages/contracts/ContractBuilderPage";
+import EditContractPage from "./pages/contracts/EditContractPage";
 import AuditPage from "./pages/audit/AuditPage";
 import UsersPage from "./pages/users/UsersPage";
 import AuthPage from "./pages/auth/AuthPage";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/products/:id" element={<ProtectedRoute><EditProductPage /></ProtectedRoute>} />
             <Route path="/contracts" element={<ProtectedRoute><ContractsPage /></ProtectedRoute>} />
             <Route path="/contracts/new" element={<ProtectedRoute><ContractBuilderPage /></ProtectedRoute>} />
+            <Route path="/contracts/:id" element={<ProtectedRoute><EditContractPage /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

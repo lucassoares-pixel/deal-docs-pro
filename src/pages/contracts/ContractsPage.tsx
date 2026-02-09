@@ -12,7 +12,7 @@ import { DateRangeFilter, useDateRangeFilter } from '@/components/ui/date-range-
 import { useContracts, ContractWithDetails } from '@/hooks/useContracts';
 import { generateClientSheetPDF, generateContractPDF } from '@/utils/pdfGenerator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { FileDown, FileText, Plus, Search, Calendar, Loader2, Trash2, XCircle } from 'lucide-react';
+import { FileDown, FileText, Plus, Search, Calendar, Loader2, Trash2, XCircle, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -193,6 +193,14 @@ export default function ContractsPage() {
       className: 'text-right',
       render: (contract: ContractWithDetails) => (
         <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${contract.id}`); }}
+            title="Editar"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
           <Button
             size="sm"
             variant="outline"

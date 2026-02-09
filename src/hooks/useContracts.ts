@@ -129,6 +129,76 @@ export function useContracts() {
     return contractData;
   };
 
+  const updateContract = async (
+    id: string,
+    contract: Partial<ContractInsert>,
+    contractProducts: Omit<ContractProductInsert, 'contract_id'>[],
+    discountLogs: Omit<DiscountLogInsert, 'contract_id'>[]
+  ) => {
+    if (!user) return null;
+
+    // Update contract
+    const { data: contractData, error: contractError } = await supabase
+      .from('contracts')
+      .update(contract)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (contractError) {
+      toast({
+        title: 'Erro ao atualizar contrato',
+        description: contractError.message,
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    // Replace contract products
+    await supabase.from('contract_products').delete().eq('contract_id', id);
+    if (contractProducts.length > 0) {
+      const productsWithContractId = contractProducts.map(p => ({
+        ...p,
+        contract_id: id,
+      }));
+      const { error: productsError } = await supabase
+        .from('contract_products')
+        .insert(productsWithContractId);
+      if (productsError) console.error('Error updating contract products:', productsError);
+    }
+
+    // Replace discount logs
+    await supabase.from('discount_logs').delete().eq('contract_id', id);
+    if (discountLogs.length > 0) {
+      const logsWithContractId = discountLogs.map(l => ({
+        ...l,
+        contract_id: id,
+      }));
+      const { error: logsError } = await supabase
+        .from('discount_logs')
+        .insert(logsWithContractId);
+      if (logsError) console.error('Error updating discount logs:', logsError);
+    }
+
+    // Audit log
+    await supabase.from('audit_logs').insert({
+      user_id: user.id,
+      user_name: profile?.name || user.email || 'Unknown',
+      action: 'update',
+      entity_type: 'contract',
+      entity_id: id,
+      new_value: { id },
+      description: 'Contrato atualizado',
+    });
+
+    await fetchContracts();
+    toast({
+      title: 'Contrato atualizado',
+      description: 'Contrato atualizado com sucesso!',
+    });
+    return contractData;
+  };
+
   const updateContractStatus = async (id: string, status: string) => {
     const { data, error } = await supabase
       .from('contracts')
@@ -233,6 +303,7 @@ export function useContracts() {
     contracts,
     loading,
     addContract,
+    updateContract,
     updateContractStatus,
     deleteContract,
     toggleSigned,
