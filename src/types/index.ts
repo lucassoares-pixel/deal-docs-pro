@@ -87,6 +87,10 @@ export interface Contract {
   start_date: string;
   billing_day: number;
   fidelity_months: number;
+  extra_discount_value?: number | null;
+  extra_discount_months?: number | null;
+  extra_discount_period_type?: string | null;
+  extra_discount_end_date?: string | null;
   status: ContractStatus;
   created_at: string;
   updated_at: string;
