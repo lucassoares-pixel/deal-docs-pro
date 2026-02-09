@@ -115,6 +115,16 @@ export default function ContractsPage() {
       ),
     },
     {
+      key: 'modules',
+      header: 'Módulos',
+      render: (contract: ContractWithDetails) => {
+        const totalQty = (contract.products ?? []).reduce((sum, p) => sum + (p.quantity || 1), 0);
+        return (
+          <span className="font-medium text-foreground">{totalQty}</span>
+        );
+      },
+    },
+    {
       key: 'recurring',
       header: 'Valor Mensal',
       render: (contract: ContractWithDetails) => (
