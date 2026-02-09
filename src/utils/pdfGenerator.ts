@@ -310,7 +310,8 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   if (hasDiscount) {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
-    const discountNote = `*FOI CONCEDIDO UM DESCONTO SOBRE O VALOR DA MENSALIDADE, QUE DEVERÁ TER A COBRANÇA DE ${formatCurrency(contract.recurring_total_discounted)} NO CNPJ POR PERÍODO INDETERMINADO.`;
+    const finalMonthlyValue = contract.recurring_total_discounted - (contract.extra_discount_value ?? 0);
+    const discountNote = `*FOI CONCEDIDO UM DESCONTO SOBRE O VALOR DA MENSALIDADE, QUE DEVERÁ TER A COBRANÇA DE ${formatCurrency(finalMonthlyValue)} NO CNPJ POR PERÍODO INDETERMINADO.`;
     const discountNoteLines = doc.splitTextToSize(discountNote, pageWidth - 28);
     doc.text(discountNoteLines, 14, yPos);
     yPos += discountNoteLines.length * 3 + 5;
