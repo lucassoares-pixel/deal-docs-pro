@@ -64,13 +64,25 @@ export default function ContractBuilderPage() {
   const [extraDiscountPeriodType, setExtraDiscountPeriodType] = useState<DiscountPeriodType>('indeterminate');
   const [extraDiscountMonths, setExtraDiscountMonths] = useState<string>('');
   const [extraDiscountEndDate, setExtraDiscountEndDate] = useState<string>('');
+  const [productSearch, setProductSearch] = useState('');
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const legalRep = legalRepresentatives.find(lr => lr.client_id === selectedClientId);
 
-  // Separate products by type
-  const recurringProducts = activeProducts.filter(p => p.billing_type === 'recurring');
-  const oneTimeProducts = activeProducts.filter(p => p.billing_type === 'one_time');
+  // Filter and separate products by type
+  const filteredProducts = activeProducts.filter(p => {
+    if (!productSearch.trim()) return true;
+    const search = productSearch.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(search) ||
+      p.description?.toLowerCase().includes(search) ||
+      p.sku?.toLowerCase().includes(search) ||
+      p.category?.toLowerCase().includes(search) ||
+      p.brand?.toLowerCase().includes(search)
+    );
+  });
+  const recurringProducts = filteredProducts.filter(p => p.billing_type === 'recurring');
+  const oneTimeProducts = filteredProducts.filter(p => p.billing_type === 'one_time');
 
   // Calculate totals
   const calculations = useMemo(() => {
@@ -469,6 +481,19 @@ export default function ContractBuilderPage() {
 
         {step === 'products' && (
           <>
+            {/* Product Search */}
+            <div className="card-elevated p-4">
+              <div className="relative">
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Pesquisar produto por nome, SKU, categoria ou fornecedor..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
             {/* Product Selection */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recurring Products */}
