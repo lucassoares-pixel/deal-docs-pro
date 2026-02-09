@@ -314,6 +314,22 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
     const discountNoteLines = doc.splitTextToSize(discountNote, pageWidth - 28);
     doc.text(discountNoteLines, 14, yPos);
     yPos += discountNoteLines.length * 3 + 5;
+
+    // Cláusula especial de desconto logo abaixo da OBS
+    if (yPos > maxY - 40) {
+      doc.addPage();
+      yPos = addHeader(doc, logo, pageWidth);
+    }
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(DISCOUNT_CLAUSE.title, 14, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const discountClauseLines = doc.splitTextToSize(DISCOUNT_CLAUSE.content, pageWidth - 28);
+    doc.text(discountClauseLines, 14, yPos);
+    yPos += discountClauseLines.length * 4 + 8;
   }
 
   yPos += 5;
@@ -372,23 +388,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
     yPos += lines.length * 4 + 8;
   }
 
-  // Cláusula especial de desconto (se houver desconto)
-  if (hasDiscount) {
-    if (yPos > maxY - 40) {
-      doc.addPage();
-      yPos = addHeader(doc, logo, pageWidth);
-    }
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text(DISCOUNT_CLAUSE.title, 14, yPos);
-    yPos += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    const discountLines = doc.splitTextToSize(DISCOUNT_CLAUSE.content, pageWidth - 28);
-    doc.text(discountLines, 14, yPos);
-    yPos += discountLines.length * 4 + 8;
-  }
+  // (Cláusula especial já inserida após a OBS da tabela de produtos)
 
   // Assinaturas
   if (yPos > maxY - 60) {
