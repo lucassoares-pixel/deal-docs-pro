@@ -385,6 +385,7 @@ export type Database = {
         Row: {
           active: boolean
           allow_discount: boolean
+          auto_discount_percentage: number
           base_price: number
           billing_type: string
           brand: string | null
@@ -397,8 +398,10 @@ export type Database = {
           discount_period_type: string
           discount_start_date: string | null
           fidelity_months: number
+          has_auto_discount: boolean
           id: string
           implementation_price: number | null
+          is_anchor: boolean
           max_discount_percentage: number
           name: string
           product_group: string | null
@@ -412,6 +415,7 @@ export type Database = {
         Insert: {
           active?: boolean
           allow_discount?: boolean
+          auto_discount_percentage?: number
           base_price: number
           billing_type: string
           brand?: string | null
@@ -424,8 +428,10 @@ export type Database = {
           discount_period_type?: string
           discount_start_date?: string | null
           fidelity_months?: number
+          has_auto_discount?: boolean
           id?: string
           implementation_price?: number | null
+          is_anchor?: boolean
           max_discount_percentage?: number
           name: string
           product_group?: string | null
@@ -439,6 +445,7 @@ export type Database = {
         Update: {
           active?: boolean
           allow_discount?: boolean
+          auto_discount_percentage?: number
           base_price?: number
           billing_type?: string
           brand?: string | null
@@ -451,8 +458,10 @@ export type Database = {
           discount_period_type?: string
           discount_start_date?: string | null
           fidelity_months?: number
+          has_auto_discount?: boolean
           id?: string
           implementation_price?: number | null
+          is_anchor?: boolean
           max_discount_percentage?: number
           name?: string
           product_group?: string | null
