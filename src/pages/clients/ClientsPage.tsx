@@ -40,6 +40,15 @@ export default function ClientsPage() {
       ),
     },
     {
+      key: 'type',
+      header: 'Tipo',
+      render: (client: Client) => (
+        <span className={(client as any).company_type === 'matriz' ? 'badge-info' : 'badge-warning'}>
+          {(client as any).company_type === 'matriz' ? 'Matriz' : 'Filial'}
+        </span>
+      ),
+    },
+    {
       key: 'cnpj',
       header: 'CNPJ',
       render: (client: Client) => (
