@@ -37,6 +37,7 @@ type DiscountPeriodType = 'indeterminate' | 'months' | 'fixed_date';
 interface SelectedProduct {
   product: Product;
   quantity: number;
+  customBasePrice: number | null;
   discountPercentage: number;
   discountPeriodType: DiscountPeriodType;
   discountMonths: number | null;
@@ -77,18 +78,18 @@ export default function ContractBuilderPage() {
     let recurringDiscounted = 0;
     let implementationTotal = 0;
 
-    selectedProducts.forEach(({ product, quantity, discountPercentage, customImplementationPrice }) => {
+    selectedProducts.forEach(({ product, quantity, discountPercentage, customImplementationPrice, customBasePrice }) => {
+      const effectiveBasePrice = customBasePrice ?? Number(product.base_price);
       if (product.billing_type === 'recurring') {
-        const full = Number(product.base_price) * quantity;
+        const full = effectiveBasePrice * quantity;
         const discounted = full * (1 - discountPercentage / 100);
         recurringFull += full;
         recurringDiscounted += discounted;
         
-        // Use custom implementation price or original
         const implPrice = customImplementationPrice ?? (product.setup_price ? Number(product.setup_price) : 0);
         implementationTotal += implPrice * quantity;
       } else {
-        const full = Number(product.base_price) * quantity;
+        const full = effectiveBasePrice * quantity;
         const discounted = full * (1 - discountPercentage / 100);
         implementationTotal += discounted;
       }
@@ -135,6 +136,7 @@ export default function ContractBuilderPage() {
       setSelectedProducts(prev => [...prev, { 
         product, 
         quantity: 1, 
+        customBasePrice: null,
         discountPercentage: 0,
         discountPeriodType: 'indeterminate',
         discountMonths: null,
@@ -215,6 +217,21 @@ export default function ContractBuilderPage() {
     );
   };
 
+  const handleBasePriceChange = (productId: string, price: number | null) => {
+    const sp = selectedProducts.find(p => p.product.id === productId);
+    if (!sp) return;
+    const originalPrice = Number(sp.product.base_price);
+    if (price !== null && price < originalPrice) {
+      toast.error(`O preço não pode ser inferior ao preço base (${formatCurrency(originalPrice)})`);
+      return;
+    }
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { ...p, customBasePrice: price } : p
+      )
+    );
+  };
+
   const validateStep = () => {
     if (step === 'client') {
       if (!selectedClientId) {
@@ -264,28 +281,34 @@ export default function ContractBuilderPage() {
     setIsSubmitting(true);
 
     try {
-      const contractProducts = selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice }) => ({
-        product_id: product.id,
-        quantity,
-        discount_percentage: discountPercentage,
-        full_price: Number(product.base_price) * quantity,
-        discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
-        discount_period_type: discountPeriodType,
-        discount_months: discountPeriodType === 'months' ? discountMonths : null,
-        discount_end_date: discountPeriodType === 'fixed_date' ? discountEndDate : null,
-        custom_enrollment_price: customImplementationPrice,
-      }));
+      const contractProducts = selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice, customBasePrice }) => {
+        const effectiveBasePrice = customBasePrice ?? Number(product.base_price);
+        return {
+          product_id: product.id,
+          quantity,
+          discount_percentage: discountPercentage,
+          full_price: effectiveBasePrice * quantity,
+          discounted_price: effectiveBasePrice * quantity * (1 - discountPercentage / 100),
+          discount_period_type: discountPeriodType,
+          discount_months: discountPeriodType === 'months' ? discountMonths : null,
+          discount_end_date: discountPeriodType === 'fixed_date' ? discountEndDate : null,
+          custom_enrollment_price: customImplementationPrice,
+        };
+      });
 
       const discountLogs = selectedProducts
         .filter(p => p.discountPercentage > 0)
-        .map(({ product, quantity, discountPercentage }) => ({
-          product_id: product.id,
-          product_name: product.name,
-          original_price: Number(product.base_price) * quantity,
-          discount_percentage: discountPercentage,
-          discounted_price: Number(product.base_price) * quantity * (1 - discountPercentage / 100),
-          applied_by: profile?.name || 'Unknown',
-        }));
+        .map(({ product, quantity, discountPercentage, customBasePrice }) => {
+          const effectiveBasePrice = customBasePrice ?? Number(product.base_price);
+          return {
+            product_id: product.id,
+            product_name: product.name,
+            original_price: effectiveBasePrice * quantity,
+            discount_percentage: discountPercentage,
+            discounted_price: effectiveBasePrice * quantity * (1 - discountPercentage / 100),
+            applied_by: profile?.name || 'Unknown',
+          };
+        });
 
       const result = await addContract(
         {
@@ -564,8 +587,9 @@ export default function ContractBuilderPage() {
               <div className="card-elevated p-6">
                 <h2 className="section-title">Produtos Selecionados</h2>
                 <div className="space-y-6">
-                  {selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice }) => {
-                    const fullPrice = Number(product.base_price) * quantity;
+                  {selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice, customBasePrice }) => {
+                    const effectiveBasePrice = customBasePrice ?? Number(product.base_price);
+                    const fullPrice = effectiveBasePrice * quantity;
                     const discountedPrice = fullPrice * (1 - discountPercentage / 100);
                     const hasImplementation = product.billing_type === 'recurring' && product.setup_price;
                     
@@ -633,7 +657,31 @@ export default function ContractBuilderPage() {
                           </div>
                         </div>
 
-                        {/* Row 2: Discount configuration */}
+                        {/* Row 2: Custom base price */}
+                        <div className="pt-4 border-t border-border/50">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                              <Label className="text-sm text-muted-foreground">Preço Unitário (R$)</Label>
+                              <div className="relative mt-1">
+                                <Input
+                                  type="number"
+                                  min={Number(product.base_price)}
+                                  step="0.01"
+                                  value={customBasePrice ?? Number(product.base_price)}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    handleBasePriceChange(product.id, isNaN(val) ? null : val);
+                                  }}
+                                  className="pr-6 text-right"
+                                />
+                                <DollarSign className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">Mín: {formatCurrency(Number(product.base_price))}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Row 3: Discount configuration */}
                         {product.allow_discount && (
                           <div className="pt-4 border-t border-border/50">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
