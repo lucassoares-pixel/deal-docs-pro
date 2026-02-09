@@ -65,20 +65,30 @@ export default function ContractBuilderPage() {
   const [extraDiscountMonths, setExtraDiscountMonths] = useState<string>('');
   const [extraDiscountEndDate, setExtraDiscountEndDate] = useState<string>('');
   const [productSearch, setProductSearch] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState<string>('');
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const legalRep = legalRepresentatives.find(lr => lr.client_id === selectedClientId);
 
-  // Filter and separate products by type
+  // Get unique brands from active products
+  const availableBrands = useMemo(() => {
+    const brands = new Set<string>();
+    activeProducts.forEach(p => {
+      if (p.brand) brands.add(p.brand);
+    });
+    return Array.from(brands).sort();
+  }, [activeProducts]);
+
+  // Filter products by selected brand, then by search
   const filteredProducts = activeProducts.filter(p => {
+    if (!selectedBrand) return false;
+    if (p.brand !== selectedBrand) return false;
     if (!productSearch.trim()) return true;
     const search = productSearch.toLowerCase();
     return (
       p.name.toLowerCase().includes(search) ||
       p.description?.toLowerCase().includes(search) ||
-      p.sku?.toLowerCase().includes(search) ||
-      p.category?.toLowerCase().includes(search) ||
-      p.brand?.toLowerCase().includes(search)
+      p.sku?.toLowerCase().includes(search)
     );
   });
   const recurringProducts = filteredProducts.filter(p => p.billing_type === 'recurring');
@@ -481,20 +491,42 @@ export default function ContractBuilderPage() {
 
         {step === 'products' && (
           <>
-            {/* Product Search */}
-            <div className="card-elevated p-4">
-              <div className="relative">
-                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Pesquisar produto por nome, SKU, categoria ou fornecedor..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="pl-10"
-                />
+            {/* Brand Selector + Search */}
+            <div className="card-elevated p-4 space-y-4">
+              <div>
+                <Label className="form-label">Fornecedor *</Label>
+                <Select value={selectedBrand} onValueChange={(v) => { setSelectedBrand(v); setProductSearch(''); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o fornecedor para ver os módulos..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableBrands.map(brand => (
+                      <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+              {selectedBrand && (
+                <div className="relative">
+                  <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filtrar módulos por nome ou SKU..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Product Selection */}
+            {!selectedBrand && (
+              <div className="card-elevated p-8 text-center text-muted-foreground">
+                <Package className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                <p>Selecione um fornecedor acima para ver os módulos disponíveis.</p>
+              </div>
+            )}
+
+            {selectedBrand && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recurring Products */}
               <div className="card-elevated p-6">
@@ -606,6 +638,7 @@ export default function ContractBuilderPage() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Selected Products with Discount Configuration */}
             {selectedProducts.length > 0 && (
