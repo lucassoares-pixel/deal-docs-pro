@@ -63,6 +63,7 @@ export type Database = {
           address_zip: string
           cnpj: string
           company_name: string
+          company_type: string
           created_at: string
           email: string
           id: string
@@ -80,6 +81,7 @@ export type Database = {
           address_zip: string
           cnpj: string
           company_name: string
+          company_type?: string
           created_at?: string
           email: string
           id?: string
@@ -97,6 +99,7 @@ export type Database = {
           address_zip?: string
           cnpj?: string
           company_name?: string
+          company_type?: string
           created_at?: string
           email?: string
           id?: string

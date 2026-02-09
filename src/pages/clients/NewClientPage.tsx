@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useClients } from '@/hooks/useClients';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, Building2, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ export default function NewClientPage() {
   const [formData, setFormData] = useState({
     company_name: '',
     trade_name: '',
+    company_type: 'matriz' as 'matriz' | 'filial',
     cnpj: '',
     email: '',
     phone: '',
@@ -70,6 +72,7 @@ export default function NewClientPage() {
       const clientData = await addClient({
         company_name: formData.company_name,
         trade_name: formData.trade_name,
+        company_type: formData.company_type,
         cnpj: formData.cnpj,
         email: formData.email,
         phone: formData.phone,
@@ -155,6 +158,22 @@ export default function NewClientPage() {
                 className={errors.trade_name ? 'border-destructive' : ''}
               />
               {errors.trade_name && <p className="form-error">{errors.trade_name}</p>}
+            </div>
+
+            <div>
+              <Label className="form-label">Tipo de Empresa *</Label>
+              <Select
+                value={formData.company_type}
+                onValueChange={(value: 'matriz' | 'filial') => setFormData(prev => ({ ...prev, company_type: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="matriz">Matriz</SelectItem>
+                  <SelectItem value="filial">Filial</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
