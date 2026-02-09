@@ -282,7 +282,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
     }),
     foot: [[
       'TOTAL',
-      '',
+      contract.products.reduce((sum, p) => sum + (p.quantity || 1), 0).toString(),
       formatCurrency(contract.setup_total), 
       formatCurrency(contract.recurring_total_full),
       '',
