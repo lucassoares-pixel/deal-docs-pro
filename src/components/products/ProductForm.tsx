@@ -28,6 +28,9 @@ export interface ProductFormData {
   max_discount_percentage: string;
   fidelity_months: string;
   active: boolean;
+  is_anchor: boolean;
+  has_auto_discount: boolean;
+  auto_discount_percentage: string;
 }
 
 interface ProductFormProps {
@@ -56,6 +59,9 @@ const defaultFormData: ProductFormData = {
   max_discount_percentage: '20',
   fidelity_months: '12',
   active: true,
+  is_anchor: false,
+  has_auto_discount: false,
+  auto_discount_percentage: '',
 };
 
 export function ProductForm({ 
@@ -81,6 +87,12 @@ export function ProductForm({
       const maxDiscount = parseFloat(formData.max_discount_percentage);
       if (isNaN(maxDiscount) || maxDiscount < 0 || maxDiscount > 100) {
         newErrors.max_discount_percentage = 'Desconto deve estar entre 0% e 100%';
+      }
+    }
+    if (formData.has_auto_discount) {
+      const autoDiscount = parseFloat(formData.auto_discount_percentage);
+      if (isNaN(autoDiscount) || autoDiscount <= 0 || autoDiscount > 100) {
+        newErrors.auto_discount_percentage = 'Percentual de desconto automático deve estar entre 0% e 100%';
       }
     }
 
@@ -277,13 +289,61 @@ export function ProductForm({
       </div>
 
       <div className="card-elevated p-6">
-        <h2 className="font-semibold text-foreground mb-6">Regras de Desconto</h2>
+        <h2 className="font-semibold text-foreground mb-6">Regras Especiais</h2>
 
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <Label className="form-label mb-0">Permitir Desconto</Label>
-              <p className="form-helper mt-0">Vendedores podem aplicar desconto neste produto</p>
+              <Label className="form-label mb-0">Produto Âncora</Label>
+              <p className="form-helper mt-0">Marca este produto como âncora (ex: Multiempresa). Quando ativo em um contrato, ativa regras automáticas de desconto em outros produtos.</p>
+            </div>
+            <Switch
+              checked={formData.is_anchor}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_anchor: checked }))}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="form-label mb-0">Produto com Incidência de Desconto Automático</Label>
+              <p className="form-helper mt-0">Quando um produto âncora estiver ativo no contrato, este produto receberá desconto automático.</p>
+            </div>
+            <Switch
+              checked={formData.has_auto_discount}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, has_auto_discount: checked, auto_discount_percentage: checked ? formData.auto_discount_percentage : '' }))}
+            />
+          </div>
+
+          {formData.has_auto_discount && (
+            <div className="max-w-xs">
+              <Label className="form-label">Percentual de Desconto Automático (%)</Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.auto_discount_percentage}
+                onChange={handleChange('auto_discount_percentage')}
+                placeholder="Ex: 10"
+                className={errors.auto_discount_percentage ? 'border-destructive' : ''}
+              />
+              {errors.auto_discount_percentage && (
+                <p className="form-error">{errors.auto_discount_percentage}</p>
+              )}
+              <p className="form-helper">Desconto aplicado automaticamente quando o produto âncora estiver no contrato. Não pode ser removido manualmente.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="card-elevated p-6">
+        <h2 className="font-semibold text-foreground mb-6">Regras de Desconto Manual</h2>
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="form-label mb-0">Permitir Desconto Manual</Label>
+              <p className="form-helper mt-0">Vendedores podem aplicar desconto adicional neste produto</p>
             </div>
             <Switch
               checked={formData.allow_discount}
@@ -293,7 +353,7 @@ export function ProductForm({
 
           {formData.allow_discount && (
             <div className="max-w-xs">
-              <Label className="form-label">Desconto Máximo (%)</Label>
+              <Label className="form-label">Desconto Manual Máximo (%)</Label>
               <Input
                 type="number"
                 min="0"
@@ -306,7 +366,7 @@ export function ProductForm({
               {errors.max_discount_percentage && (
                 <p className="form-error">{errors.max_discount_percentage}</p>
               )}
-              <p className="form-helper">Limite máximo de desconto permitido para vendedores. O período do desconto será definido no contrato.</p>
+              <p className="form-helper">Limite máximo de desconto manual permitido. Aplicado após o desconto automático, se houver.</p>
             </div>
           )}
         </div>

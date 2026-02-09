@@ -41,6 +41,9 @@ export default function EditProductPage() {
           max_discount_percentage: product.max_discount_percentage.toString(),
           fidelity_months: product.fidelity_months.toString(),
           active: product.active,
+          is_anchor: (product as any).is_anchor || false,
+          has_auto_discount: (product as any).has_auto_discount || false,
+          auto_discount_percentage: (product as any).auto_discount_percentage?.toString() || '',
         });
         setIsLoading(false);
       } else if (products.length > 0) {
@@ -74,6 +77,9 @@ export default function EditProductPage() {
         max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
         fidelity_months: parseInt(formData.fidelity_months) || 0,
         active: formData.active,
+        is_anchor: formData.is_anchor,
+        has_auto_discount: formData.has_auto_discount,
+        auto_discount_percentage: formData.has_auto_discount ? parseFloat(formData.auto_discount_percentage) : 0,
       } as any);
 
       if (result) {

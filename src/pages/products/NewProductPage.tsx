@@ -38,6 +38,9 @@ export default function NewProductPage() {
         max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
         fidelity_months: parseInt(formData.fidelity_months) || 0,
         active: formData.active,
+        is_anchor: formData.is_anchor,
+        has_auto_discount: formData.has_auto_discount,
+        auto_discount_percentage: formData.has_auto_discount ? parseFloat(formData.auto_discount_percentage) : 0,
       } as any);
 
       if (result) {
