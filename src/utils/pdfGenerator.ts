@@ -255,12 +255,12 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   // Tabela de produtos com novas colunas
   autoTable(doc, {
     startY: yPos,
-    head: [['PRODUTO', 'IMPLANTAÇÃO', 'MENSALIDADE', '% DESC', 'VALOR C/ DESC', 'VALIDADE DESC', 'FIDELIDADE']],
+    head: [['PRODUTO', 'QTD.', 'IMPLANTAÇÃO', 'MENSALIDADE', '% DESC', 'VALOR C/ DESC', 'VALIDADE DESC', 'FIDELIDADE']],
     body: contract.products.map(p => {
       // Determinar validade do desconto
       let discountValidity = '-';
       if (p.discount_percentage > 0) {
-        if (p.discount_period_type === 'indefinite') {
+        if (p.discount_period_type === 'indefinite' || p.discount_period_type === 'indeterminate') {
           discountValidity = 'Indeterminado';
         } else if (p.discount_period_type === 'months' && p.discount_months) {
           discountValidity = `${p.discount_months} meses`;
@@ -271,6 +271,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
       
       return [
         p.product.name,
+        p.quantity.toString(),
         formatCurrency((p.custom_enrollment_price ?? p.product.setup_price ?? 0) * p.quantity),
         formatCurrency(p.full_price),
         p.discount_percentage > 0 ? `${p.discount_percentage}%` : '-',
@@ -280,7 +281,8 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
       ];
     }),
     foot: [[
-      'TOTAL', 
+      'TOTAL',
+      '',
       formatCurrency(contract.setup_total), 
       formatCurrency(contract.recurring_total_full),
       '',
@@ -294,13 +296,14 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
     footStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', fontSize: 7 },
     margin: { left: 14, right: 14 },
     columnStyles: {
-      0: { cellWidth: 35 },
-      1: { cellWidth: 22, halign: 'right' },
-      2: { cellWidth: 24, halign: 'right' },
-      3: { cellWidth: 15, halign: 'center' },
-      4: { cellWidth: 26, halign: 'right' },
-      5: { cellWidth: 28, halign: 'center' },
-      6: { cellWidth: 22, halign: 'center' }
+      0: { cellWidth: 30 },
+      1: { cellWidth: 12, halign: 'center' },
+      2: { cellWidth: 22, halign: 'right' },
+      3: { cellWidth: 22, halign: 'right' },
+      4: { cellWidth: 13, halign: 'center' },
+      5: { cellWidth: 24, halign: 'right' },
+      6: { cellWidth: 26, halign: 'center' },
+      7: { cellWidth: 22, halign: 'center' }
     }
   });
 
