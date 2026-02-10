@@ -68,6 +68,7 @@ export type Database = {
           email: string
           id: string
           phone: string
+          state_registration: string | null
           trade_name: string
           updated_at: string
           user_id: string
@@ -86,6 +87,7 @@ export type Database = {
           email: string
           id?: string
           phone: string
+          state_registration?: string | null
           trade_name: string
           updated_at?: string
           user_id: string
@@ -104,6 +106,7 @@ export type Database = {
           email?: string
           id?: string
           phone?: string
+          state_registration?: string | null
           trade_name?: string
           updated_at?: string
           user_id?: string
@@ -173,6 +176,7 @@ export type Database = {
       contracts: {
         Row: {
           billing_day: number
+          certificate_type: string | null
           client_id: string
           created_at: string
           extra_discount_end_date: string | null
@@ -181,6 +185,7 @@ export type Database = {
           extra_discount_value: number | null
           fidelity_months: number
           id: string
+          implementation_type: string | null
           legal_representative_id: string | null
           recurring_total_discounted: number
           recurring_total_full: number
@@ -188,11 +193,14 @@ export type Database = {
           signed: boolean
           start_date: string
           status: string
+          training_contact_name: string | null
+          training_contact_phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           billing_day?: number
+          certificate_type?: string | null
           client_id: string
           created_at?: string
           extra_discount_end_date?: string | null
@@ -201,6 +209,7 @@ export type Database = {
           extra_discount_value?: number | null
           fidelity_months?: number
           id?: string
+          implementation_type?: string | null
           legal_representative_id?: string | null
           recurring_total_discounted?: number
           recurring_total_full?: number
@@ -208,11 +217,14 @@ export type Database = {
           signed?: boolean
           start_date: string
           status?: string
+          training_contact_name?: string | null
+          training_contact_phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           billing_day?: number
+          certificate_type?: string | null
           client_id?: string
           created_at?: string
           extra_discount_end_date?: string | null
@@ -221,6 +233,7 @@ export type Database = {
           extra_discount_value?: number | null
           fidelity_months?: number
           id?: string
+          implementation_type?: string | null
           legal_representative_id?: string | null
           recurring_total_discounted?: number
           recurring_total_full?: number
@@ -228,6 +241,8 @@ export type Database = {
           signed?: boolean
           start_date?: string
           status?: string
+          training_contact_name?: string | null
+          training_contact_phone?: string | null
           updated_at?: string
           user_id?: string
         }

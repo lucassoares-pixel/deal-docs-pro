@@ -20,6 +20,7 @@ export default function NewClientPage() {
     trade_name: '',
     company_type: 'matriz' as 'matriz' | 'filial',
     cnpj: '',
+    state_registration: '',
     email: '',
     phone: '',
     address_street: '',
@@ -74,6 +75,7 @@ export default function NewClientPage() {
         trade_name: formData.trade_name,
         company_type: formData.company_type,
         cnpj: formData.cnpj,
+        state_registration: formData.state_registration || null,
         email: formData.email,
         phone: formData.phone,
         address_street: formData.address_street,
@@ -82,7 +84,7 @@ export default function NewClientPage() {
         address_city: formData.address_city,
         address_state: formData.address_state,
         address_zip: formData.address_zip,
-      });
+      } as any);
 
       if (clientData) {
         await addLegalRepresentative({
@@ -185,6 +187,15 @@ export default function NewClientPage() {
                 className={errors.cnpj ? 'border-destructive' : ''}
               />
               {errors.cnpj && <p className="form-error">{errors.cnpj}</p>}
+            </div>
+
+            <div>
+              <Label className="form-label">Inscrição Estadual</Label>
+              <Input
+                value={formData.state_registration}
+                onChange={handleChange('state_registration')}
+                placeholder="Inscrição Estadual"
+              />
             </div>
 
             <div>

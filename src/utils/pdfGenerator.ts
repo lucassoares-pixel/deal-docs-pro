@@ -448,7 +448,7 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
 
   // Client Info Box
   doc.setFillColor(245, 247, 250);
-  doc.roundedRect(14, yPos, pageWidth - 28, 55, 3, 3, 'F');
+  doc.roundedRect(14, yPos, pageWidth - 28, 65, 3, 3, 'F');
   yPos += 10;
 
   doc.setFontSize(12);
@@ -464,11 +464,15 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   yPos += 5;
   doc.text(`CNPJ: ${contract.client.cnpj}`, 20, yPos);
   yPos += 5;
+  doc.text(`Inscrição Estadual: ${(contract.client as any).state_registration || 'Não informada'}`, 20, yPos);
+  yPos += 5;
   doc.text(`E-mail: ${contract.client.email}`, 20, yPos);
   yPos += 5;
   doc.text(`Telefone: ${contract.client.phone}`, 20, yPos);
   yPos += 5;
-  doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number} - ${contract.client.address_city}/${contract.client.address_state}`, 20, yPos);
+  doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number} - ${contract.client.address_neighborhood}`, 20, yPos);
+  yPos += 5;
+  doc.text(`${contract.client.address_city}/${contract.client.address_state} - CEP: ${contract.client.address_zip}`, 20, yPos);
   yPos += 15;
 
   // Legal Representative Box
@@ -498,32 +502,37 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   doc.setFont('helvetica', 'normal');
   doc.text(`Data de Início: ${format(new Date(contract.start_date), "dd/MM/yyyy")}`, 14, yPos);
   yPos += 5;
-  doc.text(`Período de Fidelidade: ${contract.fidelity_months} meses`, 14, yPos);
-  yPos += 5;
   doc.text(`Dia de Vencimento: ${contract.billing_day}`, 14, yPos);
-  yPos += 15;
+  yPos += 5;
+  const implType = (contract as any).implementation_type === 'presencial' ? 'Presencial' : 'Remota';
+  doc.text(`Tipo de Implantação: ${implType}`, 14, yPos);
+  yPos += 5;
+  const certType = (contract as any).certificate_type;
+  if (certType) {
+    doc.text(`Tipo de Certificado: ${certType}`, 14, yPos);
+    yPos += 5;
+  }
+  const trainingName = (contract as any).training_contact_name;
+  const trainingPhone = (contract as any).training_contact_phone;
+  if (trainingName) {
+    doc.text(`Responsável pelo Treinamento: ${trainingName}${trainingPhone ? ` - Tel: ${trainingPhone}` : ''}`, 14, yPos);
+    yPos += 5;
+  }
+  yPos += 10;
 
-  // Products Table (without prices)
+  // Products as text list (not table)
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('PRODUTOS CONTRATADOS', 14, yPos);
-  yPos += 5;
+  doc.text('MÓDULOS CONTRATADOS', 14, yPos);
+  yPos += 8;
 
-  autoTable(doc, {
-    startY: yPos,
-    head: [['Produto', 'Tipo', 'Quantidade', 'Fidelidade']],
-    body: contract.products.map(p => [
-      p.product.name,
-      p.product.billing_type === 'recurring' ? 'Recorrente' : 'Único',
-      p.quantity.toString(),
-      p.product.fidelity_months > 0 ? `${p.product.fidelity_months} meses` : '-'
-    ]),
-    theme: 'striped',
-    headStyles: { fillColor: [34, 52, 79], textColor: 255 },
-    margin: { left: 14, right: 14 },
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  contract.products.forEach(p => {
+    doc.text(`• ${p.product.name} — Quantidade: ${p.quantity}`, 18, yPos);
+    yPos += 6;
   });
-
-  yPos = (doc as any).lastAutoTable.finalY + 20;
+  yPos += 10;
 
   // Footer note
   doc.setFontSize(8);
