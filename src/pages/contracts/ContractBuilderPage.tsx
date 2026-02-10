@@ -281,18 +281,25 @@ export default function ContractBuilderPage() {
   };
 
   const handleBasePriceChange = (productId: string, price: number | null) => {
-    const sp = selectedProducts.find(p => p.product.id === productId);
-    if (!sp) return;
-    const originalPrice = Number(sp.product.base_price);
-    if (price !== null && price < originalPrice) {
-      toast.error(`O preço não pode ser inferior ao preço base (${formatCurrency(originalPrice)})`);
-      return;
-    }
     setSelectedProducts(prev =>
       prev.map(p =>
         p.product.id === productId ? { ...p, customBasePrice: price } : p
       )
     );
+  };
+
+  const handleBasePriceBlur = (productId: string) => {
+    const sp = selectedProducts.find(p => p.product.id === productId);
+    if (!sp) return;
+    const originalPrice = Number(sp.product.base_price);
+    if (sp.customBasePrice !== null && sp.customBasePrice < originalPrice) {
+      toast.error(`O preço não pode ser inferior ao preço base (${formatCurrency(originalPrice)})`);
+      setSelectedProducts(prev =>
+        prev.map(p =>
+          p.product.id === productId ? { ...p, customBasePrice: null } : p
+        )
+      );
+    }
   };
 
   const validateStep = () => {
@@ -764,13 +771,13 @@ export default function ContractBuilderPage() {
                               <div className="relative mt-1">
                                 <Input
                                   type="number"
-                                  min={Number(product.base_price)}
                                   step="0.01"
                                   value={customBasePrice ?? ''}
                                   onChange={(e) => {
                                     const val = e.target.value === '' ? null : parseFloat(e.target.value);
                                     handleBasePriceChange(product.id, val === null || isNaN(val) ? null : val);
                                   }}
+                                  onBlur={() => handleBasePriceBlur(product.id)}
                                   placeholder={Number(product.base_price).toFixed(2)}
                                   className="pr-6 text-right"
                                 />
