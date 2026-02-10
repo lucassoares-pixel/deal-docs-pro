@@ -34,11 +34,15 @@ type LegalRep = Tables<'legal_representatives'>;
 
 type DiscountPeriodType = 'indeterminate' | 'months' | 'fixed_date';
 
+type DiscountMode = 'percentage' | 'fixed';
+
 interface SelectedProduct {
   product: Product;
   quantity: number;
   customBasePrice: number | null;
   discountPercentage: number;
+  discountMode: DiscountMode;
+  discountFixedValue: number;
   discountPeriodType: DiscountPeriodType;
   discountMonths: number | null;
   discountEndDate: string | null;
@@ -160,6 +164,8 @@ export default function ContractBuilderPage() {
         quantity: 1, 
         customBasePrice: null,
         discountPercentage: 0,
+        discountMode: 'percentage',
+        discountFixedValue: 0,
         discountPeriodType: 'indeterminate',
         discountMonths: null,
         discountEndDate: null,
@@ -182,22 +188,57 @@ export default function ContractBuilderPage() {
   };
 
   const handleDiscountChange = (productId: string, discount: number) => {
-    const product = selectedProducts.find(p => p.product.id === productId);
-    if (!product) return;
+    const sp = selectedProducts.find(p => p.product.id === productId);
+    if (!sp) return;
 
-    if (!product.product.allow_discount) {
+    if (!sp.product.allow_discount) {
       toast.error('Este produto não permite desconto');
       return;
     }
 
-    if (discount > product.product.max_discount_percentage) {
-      toast.error(`Desconto máximo permitido: ${product.product.max_discount_percentage}%`);
+    if (discount > sp.product.max_discount_percentage) {
+      toast.error(`Desconto máximo permitido: ${sp.product.max_discount_percentage}%`);
       return;
     }
 
     setSelectedProducts(prev =>
       prev.map(p =>
-        p.product.id === productId ? { ...p, discountPercentage: Math.max(0, discount) } : p
+        p.product.id === productId ? { ...p, discountPercentage: Math.max(0, discount), discountMode: 'percentage' } : p
+      )
+    );
+  };
+
+  const handleDiscountFixedChange = (productId: string, fixedValue: number) => {
+    const sp = selectedProducts.find(p => p.product.id === productId);
+    if (!sp) return;
+
+    if (!sp.product.allow_discount) {
+      toast.error('Este produto não permite desconto');
+      return;
+    }
+
+    const effectivePrice = sp.customBasePrice ?? Number(sp.product.base_price);
+    const maxDiscountPercent = sp.product.max_discount_percentage;
+    const maxFixedValue = effectivePrice * (maxDiscountPercent / 100);
+
+    if (fixedValue > maxFixedValue) {
+      toast.error(`Desconto máximo permitido: ${formatCurrency(maxFixedValue)} (${maxDiscountPercent}%)`);
+      return;
+    }
+
+    const percentage = effectivePrice > 0 ? (fixedValue / effectivePrice) * 100 : 0;
+
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { ...p, discountFixedValue: Math.max(0, fixedValue), discountPercentage: Math.round(percentage * 100) / 100, discountMode: 'fixed' } : p
+      )
+    );
+  };
+
+  const handleDiscountModeChange = (productId: string, mode: DiscountMode) => {
+    setSelectedProducts(prev =>
+      prev.map(p =>
+        p.product.id === productId ? { ...p, discountMode: mode, discountPercentage: 0, discountFixedValue: 0 } : p
       )
     );
   };
@@ -645,7 +686,7 @@ export default function ContractBuilderPage() {
               <div className="card-elevated p-6">
                 <h2 className="section-title">Produtos Selecionados</h2>
                 <div className="space-y-6">
-                  {selectedProducts.map(({ product, quantity, discountPercentage, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice, customBasePrice }) => {
+                  {selectedProducts.map(({ product, quantity, discountPercentage, discountMode, discountFixedValue, discountPeriodType, discountMonths, discountEndDate, customImplementationPrice, customBasePrice }) => {
                     const effectiveBasePrice = customBasePrice ?? Number(product.base_price);
                     const fullPrice = effectiveBasePrice * quantity;
                     const discountedPrice = fullPrice * (1 - discountPercentage / 100);
@@ -725,11 +766,12 @@ export default function ContractBuilderPage() {
                                   type="number"
                                   min={Number(product.base_price)}
                                   step="0.01"
-                                  value={customBasePrice ?? Number(product.base_price)}
+                                  value={customBasePrice ?? ''}
                                   onChange={(e) => {
-                                    const val = parseFloat(e.target.value);
-                                    handleBasePriceChange(product.id, isNaN(val) ? null : val);
+                                    const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                                    handleBasePriceChange(product.id, val === null || isNaN(val) ? null : val);
                                   }}
+                                  placeholder={Number(product.base_price).toFixed(2)}
                                   className="pr-6 text-right"
                                 />
                                 <DollarSign className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
@@ -743,21 +785,59 @@ export default function ContractBuilderPage() {
                         {product.allow_discount && (
                           <div className="pt-4 border-t border-border/50">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              {/* Discount Percentage */}
+                              {/* Discount Mode Toggle + Value */}
                               <div>
-                                <Label className="text-sm text-muted-foreground">Desconto (%)</Label>
-                                <div className="relative mt-1">
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max={product.max_discount_percentage}
-                                    value={discountPercentage}
-                                    onChange={(e) => handleDiscountChange(product.id, parseFloat(e.target.value) || 0)}
-                                    className="pr-6 text-right"
-                                  />
-                                  <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                <Label className="text-sm text-muted-foreground">Desconto</Label>
+                                <div className="flex items-center gap-1 mt-1 mb-1">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={discountMode === 'percentage' ? 'default' : 'outline'}
+                                    className="h-7 px-2 text-xs"
+                                    onClick={() => handleDiscountModeChange(product.id, 'percentage')}
+                                  >
+                                    <Percent className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={discountMode === 'fixed' ? 'default' : 'outline'}
+                                    className="h-7 px-2 text-xs"
+                                    onClick={() => handleDiscountModeChange(product.id, 'fixed')}
+                                  >
+                                    R$
+                                  </Button>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-1">Máx: {product.max_discount_percentage}%</p>
+                                {discountMode === 'percentage' ? (
+                                  <div className="relative">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max={product.max_discount_percentage}
+                                      value={discountPercentage || ''}
+                                      onChange={(e) => handleDiscountChange(product.id, parseFloat(e.target.value) || 0)}
+                                      placeholder="0"
+                                      className="pr-6 text-right"
+                                    />
+                                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                  </div>
+                                ) : (
+                                  <div className="relative">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      value={discountFixedValue || ''}
+                                      onChange={(e) => handleDiscountFixedChange(product.id, parseFloat(e.target.value) || 0)}
+                                      placeholder="0,00"
+                                      className="pr-6 text-right"
+                                    />
+                                    <DollarSign className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Máx: {product.max_discount_percentage}% ({formatCurrency((customBasePrice ?? Number(product.base_price)) * product.max_discount_percentage / 100)})
+                                </p>
                               </div>
 
                               {/* Discount Period Type */}
