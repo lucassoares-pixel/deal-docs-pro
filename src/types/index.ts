@@ -4,6 +4,7 @@ export interface Client {
   company_name: string;
   trade_name: string;
   cnpj: string;
+  state_registration?: string | null;
   email: string;
   phone: string;
   address_street: string;
@@ -91,6 +92,10 @@ export interface Contract {
   extra_discount_months?: number | null;
   extra_discount_period_type?: string | null;
   extra_discount_end_date?: string | null;
+  training_contact_name?: string | null;
+  training_contact_phone?: string | null;
+  implementation_type?: string | null;
+  certificate_type?: string | null;
   status: ContractStatus;
   created_at: string;
   updated_at: string;

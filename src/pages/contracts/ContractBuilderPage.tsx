@@ -62,6 +62,10 @@ export default function ContractBuilderPage() {
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [billingDay, setBillingDay] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [trainingContactName, setTrainingContactName] = useState('');
+  const [trainingContactPhone, setTrainingContactPhone] = useState('');
+  const [implementationType, setImplementationType] = useState('remota');
+  const [certificateType, setCertificateType] = useState('');
 
   // Extra discount on subtotal
   const [extraDiscountValue, setExtraDiscountValue] = useState<string>('');
@@ -395,7 +399,11 @@ export default function ContractBuilderPage() {
           extra_discount_period_type: extraDiscountPeriodType,
           extra_discount_months: extraDiscountPeriodType === 'months' ? parseInt(extraDiscountMonths) || null : null,
           extra_discount_end_date: extraDiscountPeriodType === 'fixed_date' ? extraDiscountEndDate || null : null,
-        },
+          training_contact_name: trainingContactName || null,
+          training_contact_phone: trainingContactPhone || null,
+          implementation_type: implementationType || 'remota',
+          certificate_type: certificateType || null,
+        } as any,
         contractProducts,
         discountLogs
       );
@@ -1094,6 +1102,53 @@ export default function ContractBuilderPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Training & Implementation Info */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="font-medium text-foreground mb-4">Dados de Implantação e Treinamento</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="form-label">Responsável pelo Treinamento</Label>
+                    <Input
+                      value={trainingContactName}
+                      onChange={(e) => setTrainingContactName(e.target.value)}
+                      placeholder="Nome do responsável"
+                    />
+                  </div>
+                  <div>
+                    <Label className="form-label">Telefone do Responsável</Label>
+                    <Input
+                      value={trainingContactPhone}
+                      onChange={(e) => setTrainingContactPhone(e.target.value)}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                  <div>
+                    <Label className="form-label">Tipo de Implantação</Label>
+                    <Select value={implementationType} onValueChange={setImplementationType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="remota">Remota</SelectItem>
+                        <SelectItem value="presencial">Presencial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="form-label">Tipo de Certificado</Label>
+                    <Select value={certificateType} onValueChange={setCertificateType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A1">A1</SelectItem>
+                        <SelectItem value="A3">A3</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

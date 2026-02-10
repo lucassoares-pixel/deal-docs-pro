@@ -23,6 +23,7 @@ export default function EditClientPage() {
     trade_name: '',
     company_type: 'matriz' as 'matriz' | 'filial',
     cnpj: '',
+    state_registration: '',
     email: '',
     phone: '',
     address_street: '',
@@ -44,6 +45,7 @@ export default function EditClientPage() {
           trade_name: client.trade_name,
           company_type: ((client as any).company_type as 'matriz' | 'filial') || 'matriz',
           cnpj: client.cnpj,
+          state_registration: (client as any).state_registration || '',
           email: client.email,
           phone: client.phone,
           address_street: client.address_street,
@@ -89,6 +91,7 @@ export default function EditClientPage() {
         company_name: formData.company_name,
         trade_name: formData.trade_name,
         cnpj: formData.cnpj,
+        state_registration: formData.state_registration || null,
         email: formData.email,
         phone: formData.phone,
         address_street: formData.address_street,
@@ -220,6 +223,15 @@ export default function EditClientPage() {
                 className={errors.cnpj ? 'border-destructive' : ''}
               />
               {errors.cnpj && <p className="form-error">{errors.cnpj}</p>}
+            </div>
+
+            <div>
+              <Label className="form-label">Inscrição Estadual</Label>
+              <Input
+                value={formData.state_registration}
+                onChange={handleChange('state_registration')}
+                placeholder="Inscrição Estadual"
+              />
             </div>
 
             <div>
