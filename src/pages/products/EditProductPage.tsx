@@ -70,7 +70,7 @@ export default function EditProductPage() {
         product_type: formData.product_type,
         recurring_period: formData.billing_type === 'recurring' ? 'monthly' : null,
         base_price: parseFloat(formData.base_price),
-        setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
+        setup_price: formData.setup_price ? parseFloat(formData.setup_price) : 0,
         allow_discount: formData.allow_discount,
         max_discount_percentage: formData.allow_discount ? parseInt(formData.max_discount_percentage) || 0 : 0,
         fidelity_months: parseInt(formData.fidelity_months) || 0,

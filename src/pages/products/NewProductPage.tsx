@@ -31,7 +31,7 @@ export default function NewProductPage() {
         product_type: formData.product_type,
         recurring_period: formData.billing_type === 'recurring' ? 'monthly' : null,
         base_price: parseFloat(formData.base_price),
-        setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
+        setup_price: formData.setup_price ? parseFloat(formData.setup_price) : 0,
         cost_price: isAdmin && formData.cost_price ? parseFloat(formData.cost_price) : null,
         cas_price: isAdmin && formData.cas_price ? parseFloat(formData.cas_price) : null,
         allow_discount: formData.allow_discount,
