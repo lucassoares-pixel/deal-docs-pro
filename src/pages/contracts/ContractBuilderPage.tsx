@@ -919,7 +919,7 @@ export default function ContractBuilderPage() {
                                   min="0"
                                   step="0.01"
                                   value={customImplementationPrice ?? ''}
-                                  onChange={(e) => handleImplementationPriceChange(product.id, parseFloat(e.target.value) || null)}
+                                  onChange={(e) => handleImplementationPriceChange(product.id, e.target.value === '' ? null : parseFloat(e.target.value))}
                                   placeholder={product.setup_price?.toString() || '0'}
                                   className="mt-1"
                                 />
