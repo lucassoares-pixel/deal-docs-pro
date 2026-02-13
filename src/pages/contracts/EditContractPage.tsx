@@ -493,7 +493,7 @@ export default function EditContractPage() {
                           <div className="w-48">
                             <Label className="text-sm text-muted-foreground">Valor de Implantação (R$)</Label>
                             <Input type="number" min="0" step="0.01" value={customImplementationPrice ?? ''}
-                              onChange={(e) => handleImplementationPriceChange(product.id, parseFloat(e.target.value) || null)}
+                              onChange={(e) => handleImplementationPriceChange(product.id, e.target.value === '' ? null : parseFloat(e.target.value))}
                               placeholder={product.setup_price?.toString() || '0'} className="mt-1" />
                           </div>
                           <p className="text-xs text-muted-foreground">Original: {formatCurrency(Number(product.setup_price) || 0)}</p>
