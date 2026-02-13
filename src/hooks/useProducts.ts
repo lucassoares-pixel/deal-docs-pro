@@ -70,7 +70,7 @@ export function useProducts() {
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       toast({

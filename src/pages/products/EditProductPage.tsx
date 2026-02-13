@@ -59,7 +59,7 @@ export default function EditProductPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await updateProduct(id, {
+      const updates: Record<string, any> = {
         name: formData.name,
         sku: formData.sku || null,
         description: formData.description,
@@ -71,16 +71,21 @@ export default function EditProductPage() {
         recurring_period: formData.billing_type === 'recurring' ? 'monthly' : null,
         base_price: parseFloat(formData.base_price),
         setup_price: formData.setup_price ? parseFloat(formData.setup_price) : null,
-        cost_price: isAdmin && formData.cost_price ? parseFloat(formData.cost_price) : undefined,
-        cas_price: isAdmin && formData.cas_price ? parseFloat(formData.cas_price) : undefined,
         allow_discount: formData.allow_discount,
-        max_discount_percentage: formData.allow_discount ? parseFloat(formData.max_discount_percentage) : 0,
+        max_discount_percentage: formData.allow_discount ? parseInt(formData.max_discount_percentage) || 0 : 0,
         fidelity_months: parseInt(formData.fidelity_months) || 0,
         active: formData.active,
         is_anchor: formData.is_anchor,
         has_auto_discount: formData.has_auto_discount,
         auto_discount_percentage: formData.has_auto_discount ? parseFloat(formData.auto_discount_percentage) : 0,
-      } as any);
+      };
+
+      if (isAdmin) {
+        updates.cost_price = formData.cost_price ? parseFloat(formData.cost_price) : null;
+        updates.cas_price = formData.cas_price ? parseFloat(formData.cas_price) : null;
+      }
+
+      const result = await updateProduct(id, updates as any);
 
       if (result) {
         toast.success('Produto atualizado com sucesso!');
