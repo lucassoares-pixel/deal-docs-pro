@@ -81,7 +81,9 @@ export function useProducts() {
       return null;
     }
 
-    setProducts(products.map(p => p.id === id ? data : p));
+    if (data) {
+      setProducts(products.map(p => p.id === id ? data : p));
+    }
     return data;
   };
 
