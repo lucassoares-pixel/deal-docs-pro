@@ -448,7 +448,7 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
 
   // Client Info Box
   doc.setFillColor(245, 247, 250);
-  doc.roundedRect(14, yPos, pageWidth - 28, 65, 3, 3, 'F');
+  doc.roundedRect(14, yPos, pageWidth - 28, 75, 3, 3, 'F');
   yPos += 10;
 
   doc.setFontSize(12);
@@ -465,6 +465,17 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   doc.text(`CNPJ: ${contract.client.cnpj}`, 20, yPos);
   yPos += 5;
   doc.text(`Inscrição Estadual: ${(contract.client as any).state_registration || 'Não informada'}`, 20, yPos);
+  yPos += 5;
+  doc.text(`Emite Nota Fiscal: ${(contract.client as any).issues_invoice ? 'Sim' : 'Não'}`, 20, yPos);
+  yPos += 5;
+  const taxRegimeLabels: Record<string, string> = {
+    simples_nacional: 'Simples Nacional',
+    lucro_presumido: 'Lucro Presumido',
+    lucro_real: 'Lucro Real',
+    mei: 'MEI',
+  };
+  const taxRegime = (contract.client as any).tax_regime;
+  doc.text(`Regime Tributário: ${taxRegimeLabels[taxRegime] || 'Não informado'}`, 20, yPos);
   yPos += 5;
   doc.text(`E-mail: ${contract.client.email}`, 20, yPos);
   yPos += 5;
