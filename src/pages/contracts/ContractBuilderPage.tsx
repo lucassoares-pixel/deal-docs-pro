@@ -51,7 +51,7 @@ interface SelectedProduct {
 
 export default function ContractBuilderPage() {
   const navigate = useNavigate();
-  const { clients, legalRepresentatives, loading: loadingClients } = useClients();
+  const { clients, legalRepresentatives, loading: loadingClients, updateClient } = useClients();
   const { activeProducts, loading: loadingProducts } = useProducts();
   const { addContract } = useContracts();
   const { profile } = useAuth();
@@ -66,6 +66,8 @@ export default function ContractBuilderPage() {
   const [trainingContactPhone, setTrainingContactPhone] = useState('');
   const [implementationType, setImplementationType] = useState('remota');
   const [certificateType, setCertificateType] = useState('');
+  const [contractIssuesInvoice, setContractIssuesInvoice] = useState<boolean>(false);
+  const [contractTaxRegime, setContractTaxRegime] = useState<string>('');
 
   // Extra discount on subtotal
   const [extraDiscountValue, setExtraDiscountValue] = useState<string>('');
@@ -409,8 +411,11 @@ export default function ContractBuilderPage() {
       );
 
       if (result) {
-        // Evita download automático (frequentemente bloqueado em iframe).
-        // O usuário baixa manualmente pelos botões na listagem de contratos.
+        // Update client with invoice/tax info
+        await updateClient(selectedClient.id, {
+          issues_invoice: contractIssuesInvoice,
+          tax_regime: contractTaxRegime || null,
+        } as any);
         toast.success('Contrato criado! Baixe os PDFs na lista de contratos.');
         navigate('/contracts');
       }
@@ -489,7 +494,14 @@ export default function ContractBuilderPage() {
             
             <div className="max-w-md">
               <Label className="form-label">Cliente *</Label>
-              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+              <Select value={selectedClientId} onValueChange={(val) => {
+                setSelectedClientId(val);
+                const c = clients.find(cl => cl.id === val);
+                if (c) {
+                  setContractIssuesInvoice((c as any).issues_invoice ?? false);
+                  setContractTaxRegime((c as any).tax_regime || '');
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um cliente..." />
                 </SelectTrigger>
@@ -1073,10 +1085,31 @@ export default function ContractBuilderPage() {
                     <p><span className="text-muted-foreground">Empresa:</span> {selectedClient.trade_name}</p>
                     <p><span className="text-muted-foreground">CNPJ:</span> {selectedClient.cnpj}</p>
                     <p><span className="text-muted-foreground">Representante:</span> {legalRep.legal_name}</p>
-                    <p><span className="text-muted-foreground">Emite Nota Fiscal:</span> {(selectedClient as any).issues_invoice ? 'Sim' : 'Não'}</p>
-                    <p><span className="text-muted-foreground">Regime Tributário:</span> {
-                      { simples_nacional: 'Simples Nacional', lucro_presumido: 'Lucro Presumido', lucro_real: 'Lucro Real', mei: 'MEI' }[(selectedClient as any).tax_regime as string] || 'Não informado'
-                    }</p>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <Label className="form-label">Emite Nota Fiscal</Label>
+                      <Select value={contractIssuesInvoice ? 'sim' : 'nao'} onValueChange={(v) => setContractIssuesInvoice(v === 'sim')}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sim">Sim</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="form-label">Regime Tributário</Label>
+                      <Select value={contractTaxRegime || 'none'} onValueChange={(v) => setContractTaxRegime(v === 'none' ? '' : v)}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Não informado</SelectItem>
+                          <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
+                          <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
+                          <SelectItem value="lucro_real">Lucro Real</SelectItem>
+                          <SelectItem value="mei">MEI</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
