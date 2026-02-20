@@ -1073,6 +1073,10 @@ export default function ContractBuilderPage() {
                     <p><span className="text-muted-foreground">Empresa:</span> {selectedClient.trade_name}</p>
                     <p><span className="text-muted-foreground">CNPJ:</span> {selectedClient.cnpj}</p>
                     <p><span className="text-muted-foreground">Representante:</span> {legalRep.legal_name}</p>
+                    <p><span className="text-muted-foreground">Emite Nota Fiscal:</span> {(selectedClient as any).issues_invoice ? 'Sim' : 'Não'}</p>
+                    <p><span className="text-muted-foreground">Regime Tributário:</span> {
+                      { simples_nacional: 'Simples Nacional', lucro_presumido: 'Lucro Presumido', lucro_real: 'Lucro Real', mei: 'MEI' }[(selectedClient as any).tax_regime as string] || 'Não informado'
+                    }</p>
                   </div>
                 </div>
 
