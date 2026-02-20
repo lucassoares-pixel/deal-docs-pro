@@ -67,8 +67,10 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          issues_invoice: boolean
           phone: string
           state_registration: string | null
+          tax_regime: string | null
           trade_name: string
           updated_at: string
           user_id: string
@@ -86,8 +88,10 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          issues_invoice?: boolean
           phone: string
           state_registration?: string | null
+          tax_regime?: string | null
           trade_name: string
           updated_at?: string
           user_id: string
@@ -105,8 +109,10 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          issues_invoice?: boolean
           phone?: string
           state_registration?: string | null
+          tax_regime?: string | null
           trade_name?: string
           updated_at?: string
           user_id?: string

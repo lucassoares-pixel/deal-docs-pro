@@ -32,6 +32,8 @@ export default function EditClientPage() {
     address_city: '',
     address_state: '',
     address_zip: '',
+    issues_invoice: false,
+    tax_regime: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,6 +48,8 @@ export default function EditClientPage() {
           company_type: ((client as any).company_type as 'matriz' | 'filial') || 'matriz',
           cnpj: client.cnpj,
           state_registration: (client as any).state_registration || '',
+          issues_invoice: (client as any).issues_invoice ?? false,
+          tax_regime: (client as any).tax_regime || '',
           email: client.email,
           phone: client.phone,
           address_street: client.address_street,
@@ -101,6 +105,8 @@ export default function EditClientPage() {
         address_state: formData.address_state,
         address_zip: formData.address_zip,
         company_type: formData.company_type,
+        issues_invoice: formData.issues_invoice,
+        tax_regime: formData.tax_regime || null,
       } as any);
 
       if (result) {
@@ -232,6 +238,40 @@ export default function EditClientPage() {
                 onChange={handleChange('state_registration')}
                 placeholder="Inscrição Estadual"
               />
+            </div>
+
+            <div>
+              <Label className="form-label">Emite Nota Fiscal</Label>
+              <Select
+                value={formData.issues_invoice ? 'sim' : 'nao'}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, issues_invoice: value === 'sim' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sim">Sim</SelectItem>
+                  <SelectItem value="nao">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="form-label">Regime Tributário</Label>
+              <Select
+                value={formData.tax_regime}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tax_regime: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o regime" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
+                  <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
+                  <SelectItem value="lucro_real">Lucro Real</SelectItem>
+                  <SelectItem value="mei">MEI</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
