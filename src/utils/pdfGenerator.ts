@@ -522,10 +522,8 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   doc.text(`Tipo de Implantação: ${implType}`, 14, yPos);
   yPos += 5;
   const certType = (contract as any).certificate_type;
-  if (certType) {
-    doc.text(`Tipo de Certificado: ${certType}`, 14, yPos);
-    yPos += 5;
-  }
+  doc.text(`Tipo de Certificado: ${certType || 'Não informado'}`, 14, yPos);
+  yPos += 5;
   const trainingName = (contract as any).training_contact_name;
   const trainingPhone = (contract as any).training_contact_phone;
   if (trainingName) {
