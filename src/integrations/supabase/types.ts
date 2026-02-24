@@ -192,6 +192,7 @@ export type Database = {
           fidelity_months: number
           id: string
           implementation_type: string | null
+          invoice_types: string[] | null
           legal_representative_id: string | null
           recurring_total_discounted: number
           recurring_total_full: number
@@ -216,6 +217,7 @@ export type Database = {
           fidelity_months?: number
           id?: string
           implementation_type?: string | null
+          invoice_types?: string[] | null
           legal_representative_id?: string | null
           recurring_total_discounted?: number
           recurring_total_full?: number
@@ -240,6 +242,7 @@ export type Database = {
           fidelity_months?: number
           id?: string
           implementation_type?: string | null
+          invoice_types?: string[] | null
           legal_representative_id?: string | null
           recurring_total_discounted?: number
           recurring_total_full?: number

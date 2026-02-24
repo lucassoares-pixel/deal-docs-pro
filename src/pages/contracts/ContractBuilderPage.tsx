@@ -11,6 +11,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useContracts } from '@/hooks/useContracts';
 import { useAuth } from '@/context/AuthContext';
 import { Tables } from '@/integrations/supabase/types';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -68,6 +69,7 @@ export default function ContractBuilderPage() {
   const [certificateType, setCertificateType] = useState('');
   const [contractIssuesInvoice, setContractIssuesInvoice] = useState<boolean>(false);
   const [contractTaxRegime, setContractTaxRegime] = useState<string>('');
+  const [selectedInvoiceTypes, setSelectedInvoiceTypes] = useState<string[]>([]);
 
   // Extra discount on subtotal
   const [extraDiscountValue, setExtraDiscountValue] = useState<string>('');
@@ -405,6 +407,7 @@ export default function ContractBuilderPage() {
           training_contact_phone: trainingContactPhone || null,
           implementation_type: implementationType || 'remota',
           certificate_type: certificateType || null,
+          invoice_types: selectedInvoiceTypes,
         } as any,
         contractProducts,
         discountLogs
@@ -1109,6 +1112,26 @@ export default function ContractBuilderPage() {
                           <SelectItem value="mei">MEI</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div>
+                      <Label className="form-label">Tipos de Notas Emitidas</Label>
+                      <div className="flex flex-wrap gap-3 mt-1">
+                        {['NF-e', 'NFC-e', 'NFS-e', 'CT-e', 'MDF-e'].map((type) => (
+                          <label key={type} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={selectedInvoiceTypes.includes(type)}
+                              onCheckedChange={(checked) => {
+                                setSelectedInvoiceTypes(prev =>
+                                  checked
+                                    ? [...prev, type]
+                                    : prev.filter(t => t !== type)
+                                );
+                              }}
+                            />
+                            <span className="text-sm">{type}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
