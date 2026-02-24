@@ -82,7 +82,13 @@ export function useProducts() {
     }
 
     if (data) {
-      setProducts(products.map(p => p.id === id ? data : p));
+      setProducts(prev => prev.map(p => p.id === id ? data : p));
+    } else {
+      toast({
+        title: 'Erro ao atualizar produto',
+        description: 'Não foi possível salvar as alterações. Verifique suas permissões.',
+        variant: 'destructive',
+      });
     }
     return data;
   };
