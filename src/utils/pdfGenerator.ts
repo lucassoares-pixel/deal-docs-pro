@@ -448,7 +448,7 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
 
   // Client Info Box
   doc.setFillColor(245, 247, 250);
-  doc.roundedRect(14, yPos, pageWidth - 28, 80, 3, 3, 'F');
+  doc.roundedRect(14, yPos, pageWidth - 28, 55, 3, 3, 'F');
   yPos += 10;
 
   doc.setFontSize(12);
@@ -466,20 +466,6 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   yPos += 5;
   doc.text(`Inscrição Estadual: ${(contract.client as any).state_registration || 'Não informada'}`, 20, yPos);
   yPos += 5;
-  doc.text(`Emite Nota Fiscal: ${(contract.client as any).issues_invoice ? 'Sim' : 'Não'}`, 20, yPos);
-  yPos += 5;
-  const taxRegimeLabels: Record<string, string> = {
-    simples_nacional: 'Simples Nacional',
-    lucro_presumido: 'Lucro Presumido',
-    lucro_real: 'Lucro Real',
-    mei: 'MEI',
-  };
-  const taxRegime = (contract.client as any).tax_regime;
-  doc.text(`Regime Tributário: ${taxRegimeLabels[taxRegime] || 'Não informado'}`, 20, yPos);
-  yPos += 5;
-  const invoiceTypes = (contract as any).invoice_types as string[] | undefined;
-  doc.text(`Tipos de Notas Emitidas: ${invoiceTypes && invoiceTypes.length > 0 ? invoiceTypes.join(', ') : 'Não informado'}`, 20, yPos);
-  yPos += 5;
   doc.text(`E-mail: ${contract.client.email}`, 20, yPos);
   yPos += 5;
   doc.text(`Telefone: ${contract.client.phone}`, 20, yPos);
@@ -489,34 +475,15 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   doc.text(`${contract.client.address_city}/${contract.client.address_state} - CEP: ${contract.client.address_zip}`, 20, yPos);
   yPos += 15;
 
-  // Legal Representative Box
-  doc.setFillColor(245, 247, 250);
-  doc.roundedRect(14, yPos, pageWidth - 28, 30, 3, 3, 'F');
-  yPos += 10;
-
+  // Informações da Implantação
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('REPRESENTANTE LEGAL', 20, yPos);
+  doc.text('INFORMAÇÕES DA IMPLANTAÇÃO', 14, yPos);
   yPos += 8;
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Nome: ${contract.legal_representative.legal_name}`, 20, yPos);
-  yPos += 5;
-  doc.text(`Cargo: ${contract.legal_representative.role} | CPF: ${contract.legal_representative.cpf}`, 20, yPos);
-  yPos += 20;
-
-  // Contract Info
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('INFORMAÇÕES DO CONTRATO', 14, yPos);
-  yPos += 8;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Data de Início: ${format(new Date(contract.start_date), "dd/MM/yyyy")}`, 14, yPos);
-  yPos += 5;
-  doc.text(`Dia de Vencimento: ${contract.billing_day}`, 14, yPos);
+  doc.text(`Data de Envio do Contrato: ${format(new Date(contract.created_at), "dd/MM/yyyy")}`, 14, yPos);
   yPos += 5;
   const implType = (contract as any).implementation_type === 'presencial' ? 'Presencial' : 'Remota';
   doc.text(`Tipo de Implantação: ${implType}`, 14, yPos);
@@ -526,10 +493,21 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   yPos += 5;
   const trainingName = (contract as any).training_contact_name;
   const trainingPhone = (contract as any).training_contact_phone;
-  if (trainingName) {
-    doc.text(`Responsável pelo Treinamento: ${trainingName}${trainingPhone ? ` - Tel: ${trainingPhone}` : ''}`, 14, yPos);
-    yPos += 5;
-  }
+  doc.text(`Responsável pela Implantação: ${trainingName || 'Não informado'}${trainingPhone ? ` - Tel: ${trainingPhone}` : ''}`, 14, yPos);
+  yPos += 5;
+  doc.text(`Emite Nota Fiscal: ${(contract.client as any).issues_invoice ? 'Sim' : 'Não'}`, 14, yPos);
+  yPos += 5;
+  const taxRegimeLabels: Record<string, string> = {
+    simples_nacional: 'Simples Nacional',
+    lucro_presumido: 'Lucro Presumido',
+    lucro_real: 'Lucro Real',
+    mei: 'MEI',
+  };
+  const taxRegime = (contract.client as any).tax_regime;
+  doc.text(`Regime Tributário: ${taxRegimeLabels[taxRegime] || 'Não informado'}`, 14, yPos);
+  yPos += 5;
+  const invoiceTypes = (contract as any).invoice_types as string[] | undefined;
+  doc.text(`Tipos de Notas Emitidas: ${invoiceTypes && invoiceTypes.length > 0 ? invoiceTypes.join(', ') : 'Não informado'}`, 14, yPos);
   yPos += 10;
 
   // Products as text list (not table)
