@@ -7,7 +7,8 @@ import {
   Plus,
   History,
   LogOut,
-  Settings2
+  Settings2,
+  PieChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,7 @@ const navigation = [
 ];
 
 const adminNavigation = [
+  { name: 'Relatórios', href: '/reports', icon: PieChart },
   { name: 'Usuários', href: '/users', icon: Users },
   { name: 'Campos de Seleção', href: '/settings/fields', icon: Settings2 },
   { name: 'Histórico', href: '/audit', icon: History },
