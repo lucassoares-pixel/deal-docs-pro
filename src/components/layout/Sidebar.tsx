@@ -7,7 +7,8 @@ import {
   Plus,
   History,
   LogOut,
-  Settings2
+  Settings2,
+  PieChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
