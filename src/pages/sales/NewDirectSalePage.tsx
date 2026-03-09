@@ -79,6 +79,23 @@ export default function NewDirectSalePage() {
             <CardTitle>Dados da Venda</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Vendedor */}
+            <div className="space-y-2">
+              <Label>Vendedor Responsável</Label>
+              <Select value={sellerId} onValueChange={setSellerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sellers.map(seller => (
+                    <SelectItem key={seller.id} value={seller.id}>
+                      {seller.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Razão Social */}
             <div className="space-y-2">
               <Label htmlFor="company">Razão Social</Label>
