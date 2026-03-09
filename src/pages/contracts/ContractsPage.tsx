@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 
 export default function ContractsPage() {
   const navigate = useNavigate();
-  const { contracts, loading, updateContractStatus, deleteContract, toggleSigned } = useContracts();
+  const { contracts, loading, updateContractStatus, deleteContract, toggleSalesStatus } = useContracts();
   const [search, setSearch] = useState('');
   const { preset, setPreset, dateRange, setDateRange, filterByDate } = useDateRangeFilter('month');
 
