@@ -50,6 +50,7 @@ export function useDirectSales() {
         .from('direct_sales')
         .insert({
           user_id: user?.id,
+          seller_id: sale.seller_id,
           company_name: sale.company_name,
           sale_date: sale.sale_date,
           recurring_value: sale.recurring_value,
