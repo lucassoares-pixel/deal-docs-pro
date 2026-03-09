@@ -341,7 +341,7 @@ export default function ReportsPage() {
       
       // Calculate contract cost from product cost_prices
       const contractCost = contract.products?.reduce((sum, cp) => {
-        const productCost = cp.product?.cost_price || 0;
+        const productCost = cp.product?.cas_price ?? cp.product?.cost_price ?? 0;
         return sum + (productCost * (cp.quantity || 1));
       }, 0) ?? null;
       
