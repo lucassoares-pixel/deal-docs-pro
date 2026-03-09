@@ -190,7 +190,8 @@ export default function ReportsPage() {
         recurring: sale.recurring_value || 0,
         setup: sale.setup_value || 0,
         prizeBase: (sale.recurring_value || 0) + (sale.setup_value || 0),
-        prize: recurringPrize + setupPrize
+        prize: recurringPrize + setupPrize,
+        isDirectSale: true
       };
     });
 
