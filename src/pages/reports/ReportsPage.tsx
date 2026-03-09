@@ -26,7 +26,9 @@ import {
   Download, 
   PieChart as PieChartIcon,
   BarChart3,
-  TrendingDown
+  TrendingDown,
+  Percent,
+  Save
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
