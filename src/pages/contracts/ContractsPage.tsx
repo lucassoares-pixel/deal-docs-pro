@@ -178,14 +178,18 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: 'signed',
-      header: 'Assinado',
+      key: 'sales_status',
+      header: 'Status da Venda',
       render: (contract: ContractWithDetails) => (
         <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={(contract as any).signed === true}
-            onCheckedChange={() => toggleSigned(contract.id, !(contract as any).signed)}
-          />
+          <select
+            value={(contract as any).sales_status || 'pendente'}
+            onChange={(e) => toggleSalesStatus(contract.id, e.target.value as 'pendente' | 'concluido')}
+            className="text-sm border rounded p-1"
+          >
+            <option value="pendente">Pendente</option>
+            <option value="concluido">Concluído</option>
+          </select>
         </div>
       ),
     },
