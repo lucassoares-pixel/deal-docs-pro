@@ -316,6 +316,21 @@ export default function EditContractPage() {
           </div>
         </div>
 
+        {/* Observações da venda */}
+        <div className="card-elevated p-6">
+          <h2 className="section-title">Observações da venda</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="form-label">Data de vencimento da implantação</Label>
+              <Input type="date" value={implementationDueDate} onChange={(e) => setImplementationDueDate(e.target.value)} />
+            </div>
+            <div>
+              <Label className="form-label">Data de pagamento da primeira mensalidade</Label>
+              <Input type="date" value={firstMonthlyPaymentDate} onChange={(e) => setFirstMonthlyPaymentDate(e.target.value)} />
+            </div>
+          </div>
+        </div>
+
         {/* Add Products */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card-elevated p-6">

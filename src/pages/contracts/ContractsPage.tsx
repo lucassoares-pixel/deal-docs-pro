@@ -378,6 +378,37 @@ export default function ContractsPage() {
           columns={columns}
           data={filteredContracts}
           keyExtractor={(contract) => contract.id}
+          renderRowDetails={(contract) => {
+            const impl = (contract as any).implementation_payment_date as string | null | undefined;
+            const first = (contract as any).first_monthly_payment_date as string | null | undefined;
+
+            if (!impl && !first) return null;
+
+            const implDate = parseDateOnly(impl);
+            const firstDate = parseDateOnly(first);
+
+            return (
+              <div className="px-6 py-3 text-sm bg-muted/20 border-t border-border">
+                <p className="font-medium text-foreground">Observações da venda:</p>
+                {implDate && (
+                  <p className="text-muted-foreground">
+                    Data de vencimento da implantação:{' '}
+                    <span className="text-foreground">
+                      {format(implDate, 'dd/MM/yyyy', { locale: ptBR })}
+                    </span>
+                  </p>
+                )}
+                {firstDate && (
+                  <p className="text-muted-foreground">
+                    Data de pagamento da primeira mensalidade:{' '}
+                    <span className="text-foreground">
+                      {format(firstDate, 'dd/MM/yyyy', { locale: ptBR })}
+                    </span>
+                  </p>
+                )}
+              </div>
+            );
+          }}
           emptyMessage="Nenhum contrato encontrado com os filtros aplicados"
         />
       </div>

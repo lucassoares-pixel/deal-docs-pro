@@ -430,33 +430,7 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 
   // (Cláusula especial já inserida após a OBS da tabela de produtos)
 
-  // OBSERVAÇÕES - Datas de pagamento
-  if (contract.implementation_payment_date || contract.first_monthly_payment_date) {
-    if (yPos > maxY - 80) {
-      doc.addPage();
-      yPos = addHeader(doc, logo, pageWidth);
-    }
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('OBSERVAÇÕES', 14, yPos);
-    yPos += 8;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    if (contract.implementation_payment_date) {
-      doc.text(`Data de pagamento da implantação: ${format(new Date(contract.implementation_payment_date), "dd/MM/yyyy")}`, 14, yPos);
-      yPos += 6;
-    }
-    
-    if (contract.first_monthly_payment_date) {
-      doc.text(`Data de pagamento da primeira mensalidade: ${format(new Date(contract.first_monthly_payment_date), "dd/MM/yyyy")}`, 14, yPos);
-      yPos += 6;
-    }
-    
-    yPos += 10;
-  }
+  // (Observações da venda já inseridas logo abaixo da tabela de produtos)
 
   // Assinaturas
   if (yPos > maxY - 60) {
