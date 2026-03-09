@@ -339,15 +339,29 @@ export function useContracts() {
           total_commission
         });
 
-        if(commissionError) {
-             console.error('Erro ao gerar comissão:', commissionError);
+        if (commissionError) {
+          console.error('Erro ao gerar comissão:', commissionError);
+          toast({
+            title: 'Erro ao gerar comissão',
+            description: commissionError.message,
+            variant: 'destructive',
+          });
         }
     } else {
-        // Se voltou para pendente, remover a comissão gerada
-        await supabase
+      // Se voltou para pendente, remover a comissão gerada
+      const { error: deleteError } = await supabase
         .from('sales_commissions')
         .delete()
         .eq('contract_id', id);
+
+      if (deleteError) {
+        console.error('Erro ao remover comissão:', deleteError);
+        toast({
+          title: 'Erro ao remover comissão',
+          description: deleteError.message,
+          variant: 'destructive',
+        });
+      }
     }
 
     await fetchContracts();
