@@ -31,7 +31,8 @@ import {
   TrendingDown,
   Percent,
   Save,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
