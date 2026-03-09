@@ -93,6 +93,44 @@ export function useDirectSales() {
     },
   });
 
+  const updateDirectSale = useMutation({
+    mutationFn: async (sale: {
+      id: string;
+      company_name: string;
+      sale_date: string;
+      recurring_value: number;
+      setup_value: number;
+      seller_id: string;
+    }) => {
+      const prizeBase = sale.recurring_value + sale.setup_value;
+      const prizeValue = prizeBase * 0.10;
+
+      const { data, error } = await supabase
+        .from('direct_sales')
+        .update({
+          company_name: sale.company_name,
+          sale_date: sale.sale_date,
+          recurring_value: sale.recurring_value,
+          setup_value: sale.setup_value,
+          seller_id: sale.seller_id,
+          prize_base: prizeBase,
+          prize_value: prizeValue,
+        })
+        .eq('id', sale.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['direct_sales'] });
+      toast({ title: 'Venda atualizada com sucesso' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro ao atualizar venda', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const deleteDirectSale = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -110,5 +148,5 @@ export function useDirectSales() {
     },
   });
 
-  return { directSales, isLoading, createDirectSale, updateCost, deleteDirectSale };
+  return { directSales, isLoading, createDirectSale, updateCost, updateDirectSale, deleteDirectSale };
 }

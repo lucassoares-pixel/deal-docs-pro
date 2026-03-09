@@ -16,7 +16,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
-import { useDirectSales } from '@/hooks/useDirectSales';
+import { useDirectSales, type DirectSale } from '@/hooks/useDirectSales';
+import { EditDirectSaleDialog } from '@/components/sales/EditDirectSaleDialog';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { differenceInDays, subDays } from 'date-fns';
 import { 
@@ -30,7 +31,8 @@ import {
   TrendingDown,
   Percent,
   Save,
-  Trash2
+  Trash2,
+  Pencil
 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
@@ -42,11 +44,12 @@ export default function ReportsPage() {
   const isAdmin = profile?.role === 'admin';
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
   const [editingCosts, setEditingCosts] = useState<Record<string, string>>({});
+  const [editingSale, setEditingSale] = useState<DirectSale | null>(null);
   const { dateRange, preset, setPreset, setDateRange, filterByDate } = useDateRangeFilter('month');
   const { contracts } = useContracts();
   const { users } = useUsers();
   const { clients } = useClients();
-  const { directSales, updateCost, deleteDirectSale } = useDirectSales();
+  const { directSales, updateCost, updateDirectSale, deleteDirectSale } = useDirectSales();
 
   // Get month/year from dateRange for goals lookup
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
@@ -564,30 +567,43 @@ export default function ReportsPage() {
                     key: 'actions' as const,
                     header: 'Ações',
                     render: (item: any) => item.isDirectSale ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir venda?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir a venda de "{item.company}"? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteDirectSale.mutate(item.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            const sale = directSales?.find(s => s.id === item.id);
+                            if (sale) setEditingSale(sale);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir venda?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir a venda de "{item.company}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteDirectSale.mutate(item.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     ) : null
                   }] : [])
                 ]}
@@ -901,6 +917,18 @@ export default function ReportsPage() {
         </TabsContent>
       </Tabs>
       </div>
+
+      {/* Edit Direct Sale Dialog */}
+      <EditDirectSaleDialog
+        sale={editingSale}
+        open={!!editingSale}
+        onOpenChange={(open) => { if (!open) setEditingSale(null); }}
+        sellers={sellers}
+        isPending={updateDirectSale.isPending}
+        onSave={(data) => {
+          updateDirectSale.mutateAsync(data).then(() => setEditingSale(null));
+        }}
+      />
     </AppLayout>
   );
 }
