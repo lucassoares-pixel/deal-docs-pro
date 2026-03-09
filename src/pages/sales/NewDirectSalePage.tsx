@@ -178,7 +178,7 @@ export default function NewDirectSalePage() {
 
             <Button
               onClick={handleSubmit}
-              disabled={!companyName.trim() || createDirectSale.isPending}
+              disabled={!companyName.trim() || !sellerId || createDirectSale.isPending}
               className="w-full gap-2"
             >
               <Plus className="w-4 h-4" />
