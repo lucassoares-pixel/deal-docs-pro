@@ -136,7 +136,7 @@ export default function ReportsPage() {
 
     const sellerConversion = sellers.map(seller => {
       const sellerProposals = filteredContracts.filter(contract => contract.seller_id === seller.id);
-      const sellerClosed = sellerProposals.filter(contract => contract.signed);
+      const sellerClosed = sellerProposals.filter(contract => contract.sales_status === 'concluido');
       const sellerRate = sellerProposals.length > 0 ? (sellerClosed.length / sellerProposals.length) * 100 : 0;
       
       return {
