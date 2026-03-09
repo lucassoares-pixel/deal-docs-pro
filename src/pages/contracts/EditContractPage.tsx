@@ -54,6 +54,9 @@ export default function EditContractPage() {
   const [extraDiscountMonths, setExtraDiscountMonths] = useState<string>('');
   const [extraDiscountEndDate, setExtraDiscountEndDate] = useState<string>('');
 
+  const [implementationDueDate, setImplementationDueDate] = useState('');
+  const [firstMonthlyPaymentDate, setFirstMonthlyPaymentDate] = useState('');
+
   const contract = id ? getContractById(id) : undefined;
 
   // Initialize form from existing contract
@@ -65,6 +68,8 @@ export default function EditContractPage() {
       setExtraDiscountPeriodType((contract.extra_discount_period_type as DiscountPeriodType) || 'indeterminate');
       setExtraDiscountMonths(String(contract.extra_discount_months || ''));
       setExtraDiscountEndDate(contract.extra_discount_end_date || '');
+      setImplementationDueDate(contract.implementation_payment_date || '');
+      setFirstMonthlyPaymentDate(contract.first_monthly_payment_date || '');
 
       const products: SelectedProduct[] = (contract.products || []).map(cp => {
         const prod = activeProducts.find(p => p.id === cp.product_id) || cp.product;
@@ -226,6 +231,8 @@ export default function EditContractPage() {
           extra_discount_period_type: extraDiscountPeriodType,
           extra_discount_months: extraDiscountPeriodType === 'months' ? parseInt(extraDiscountMonths) || null : null,
           extra_discount_end_date: extraDiscountPeriodType === 'fixed_date' ? extraDiscountEndDate || null : null,
+          implementation_payment_date: implementationDueDate || null,
+          first_monthly_payment_date: firstMonthlyPaymentDate || null,
         },
         contractProducts,
         discountLogs
@@ -305,6 +312,21 @@ export default function EditContractPage() {
             <div>
               <Label className="form-label">Status</Label>
               <Input value={contract.status} disabled className="bg-muted" />
+            </div>
+          </div>
+        </div>
+
+        {/* Observações da venda */}
+        <div className="card-elevated p-6">
+          <h2 className="section-title">Observações da venda</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="form-label">Data de vencimento da implantação</Label>
+              <Input type="date" value={implementationDueDate} onChange={(e) => setImplementationDueDate(e.target.value)} />
+            </div>
+            <div>
+              <Label className="form-label">Data de pagamento da primeira mensalidade</Label>
+              <Input type="date" value={firstMonthlyPaymentDate} onChange={(e) => setFirstMonthlyPaymentDate(e.target.value)} />
             </div>
           </div>
         </div>

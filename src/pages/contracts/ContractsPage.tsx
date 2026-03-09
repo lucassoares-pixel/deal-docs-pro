@@ -37,6 +37,11 @@ export default function ContractsPage() {
     }).format(value);
   };
 
+  const parseDateOnly = (value?: string | null) => {
+    if (!value) return null;
+    return new Date(`${value}T00:00:00`);
+  };
+
   const toPdfContract = (contract: ContractWithDetails) => {
     if (!contract.client) throw new Error('Contrato sem cliente');
     if (!contract.legal_representative) throw new Error('Contrato sem representante legal');
@@ -72,6 +77,8 @@ export default function ContractsPage() {
       implementation_type: contract.implementation_type,
       certificate_type: contract.certificate_type,
       invoice_types: contract.invoice_types,
+      implementation_payment_date: contract.implementation_payment_date,
+      first_monthly_payment_date: contract.first_monthly_payment_date,
       status: contract.status as any,
       created_at: contract.created_at,
       updated_at: contract.updated_at,
@@ -371,6 +378,37 @@ export default function ContractsPage() {
           columns={columns}
           data={filteredContracts}
           keyExtractor={(contract) => contract.id}
+          renderRowDetails={(contract) => {
+            const impl = (contract as any).implementation_payment_date as string | null | undefined;
+            const first = (contract as any).first_monthly_payment_date as string | null | undefined;
+
+            if (!impl && !first) return null;
+
+            const implDate = parseDateOnly(impl);
+            const firstDate = parseDateOnly(first);
+
+            return (
+              <div className="px-6 py-3 text-sm bg-muted/20 border-t border-border">
+                <p className="font-medium text-foreground">Observações da venda:</p>
+                {implDate && (
+                  <p className="text-muted-foreground">
+                    Data de vencimento da implantação:{' '}
+                    <span className="text-foreground">
+                      {format(implDate, 'dd/MM/yyyy', { locale: ptBR })}
+                    </span>
+                  </p>
+                )}
+                {firstDate && (
+                  <p className="text-muted-foreground">
+                    Data de pagamento da primeira mensalidade:{' '}
+                    <span className="text-foreground">
+                      {format(firstDate, 'dd/MM/yyyy', { locale: ptBR })}
+                    </span>
+                  </p>
+                )}
+              </div>
+            );
+          }}
           emptyMessage="Nenhum contrato encontrado com os filtros aplicados"
         />
       </div>

@@ -94,6 +94,9 @@ export default function ContractBuilderPage() {
   const [contractTaxRegime, setContractTaxRegime] = useState<string>('');
   const [selectedInvoiceTypes, setSelectedInvoiceTypes] = useState<string[]>([]);
 
+  const [implementationDueDate, setImplementationDueDate] = useState<string>('');
+  const [firstMonthlyPaymentDate, setFirstMonthlyPaymentDate] = useState<string>('');
+
   // Extra discount on subtotal
   const [extraDiscountValue, setExtraDiscountValue] = useState<string>('');
   const [extraDiscountPeriodType, setExtraDiscountPeriodType] = useState<DiscountPeriodType>('indeterminate');
@@ -436,6 +439,8 @@ export default function ContractBuilderPage() {
           implementation_type: implementationType || 'remota',
           certificate_type: certificateType || null,
           invoice_types: selectedInvoiceTypes,
+          implementation_payment_date: implementationDueDate || null,
+          first_monthly_payment_date: firstMonthlyPaymentDate || null,
         } as any,
         contractProducts,
         discountLogs
@@ -1401,6 +1406,29 @@ export default function ContractBuilderPage() {
                   </table>
                 </div>
               )}
+            </div>
+
+            {/* Observações da venda */}
+            <div className="card-elevated p-6">
+              <h2 className="section-title">Observações da venda</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="form-label">Data de vencimento da implantação</Label>
+                  <Input
+                    type="date"
+                    value={implementationDueDate}
+                    onChange={(e) => setImplementationDueDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="form-label">Data de pagamento da primeira mensalidade</Label>
+                  <Input
+                    type="date"
+                    value={firstMonthlyPaymentDate}
+                    onChange={(e) => setFirstMonthlyPaymentDate(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Final Summary */}
