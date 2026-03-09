@@ -277,8 +277,8 @@ export default function ReportsPage() {
               icon={DollarSign}
             />
             <StatCard
-              title="Comissão Gerada"
-              value={`R$ ${financialData.totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              title="Premiação Gerada"
+              value={`R$ ${financialData.totalPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
               icon={Users}
             />
             <StatCard
