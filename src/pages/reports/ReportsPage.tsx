@@ -85,7 +85,7 @@ export default function ReportsPage() {
       totalSales,
       totalRecurring,
       totalSetup,
-      totalCommission,
+      totalPrize,
       averageTicket,
       salesData: closedSales.map(contract => {
         const client = clients?.find(c => c.id === contract.client_id);
