@@ -704,9 +704,10 @@ export default function ReportsPage() {
               {marginData.allRows.length > 0 && (
                 <Button 
                   variant="outline" 
-                  onClick={() => exportToCSV(marginData.allRows.map(r => ({
+                   onClick={() => exportToCSV(marginData.allRows.map(r => ({
                     data: r.date,
                     empresa: r.company,
+                    vendedor: r.seller,
                     tipo: r.type,
                     receita: r.revenue,
                     custo: r.cost ?? '',
