@@ -93,5 +93,22 @@ export function useDirectSales() {
     },
   });
 
-  return { directSales, isLoading, createDirectSale, updateCost };
+  const deleteDirectSale = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('direct_sales')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['direct_sales'] });
+      toast({ title: 'Venda excluída com sucesso' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro ao excluir venda', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return { directSales, isLoading, createDirectSale, updateCost, deleteDirectSale };
 }
