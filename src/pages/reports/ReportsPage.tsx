@@ -13,6 +13,7 @@ import { useContracts } from '@/hooks/useContracts';
 import { useUsers } from '@/hooks/useUsers';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
+import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { 
   TrendingUp, 
