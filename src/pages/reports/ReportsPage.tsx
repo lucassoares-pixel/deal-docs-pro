@@ -74,12 +74,12 @@ export default function ReportsPage() {
     filtered = filterByDate(filtered, (contract) => contract.created_at);
 
     // Filter by seller if selected (by profile id)
-    if (selectedSeller !== 'all') {
-      filtered = filtered.filter((contract) => contract.seller_id === selectedSeller);
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter((contract) => contract.seller_id === effectiveSeller);
     }
 
     return filtered;
-  }, [contracts, dateRange, selectedSeller, filterByDate]);
+  }, [contracts, dateRange, effectiveSeller, filterByDate]);
 
   // Filter direct sales by date
   const filteredDirectSales = useMemo(() => {
