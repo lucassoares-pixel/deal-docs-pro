@@ -11,6 +11,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useContracts } from '@/hooks/useContracts';
 import { useUsers } from '@/hooks/useUsers';
+import { useAuth } from '@/context/AuthContext';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
