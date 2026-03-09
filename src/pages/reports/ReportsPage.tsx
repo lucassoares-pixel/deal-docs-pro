@@ -140,14 +140,15 @@ export default function ReportsPage() {
     const directRecurring = filteredDirectSales.reduce((sum, s) => sum + (s.recurring_value || 0), 0);
     const directSetup = filteredDirectSales.reduce((sum, s) => sum + (s.setup_value || 0), 0);
     
-    // Calculate prize (using 60% as base rate for now)
-    const totalPrize = totalRecurring * 0.6;
+    // Prize: tier% on recurring + 10% fixed on setup
+    const totalPrize = totalRecurring * 0.6 + totalSetup * 0.10 + directSetup * 0.10;
     const averageTicket = totalSales > 0 ? totalRecurring / totalSales : 0;
 
     const contractRows = closedSales.map(contract => {
       const client = clients?.find(c => c.id === contract.client_id);
       const seller = sellers.find(s => s.id === contract.seller_id);
-      const prize = (contract.recurring_total_discounted || 0) * 0.6;
+      const recurringPrize = (contract.recurring_total_discounted || 0) * 0.6;
+      const setupPrize = (contract.setup_total || 0) * 0.10;
       
       return {
         id: contract.id,
@@ -158,21 +159,25 @@ export default function ReportsPage() {
         recurring: contract.recurring_total_discounted || 0,
         setup: contract.setup_total || 0,
         prizeBase: (contract.recurring_total_discounted || 0) + (contract.setup_total || 0),
-        prize
+        prize: recurringPrize + setupPrize
       };
     });
 
-    const directRows = filteredDirectSales.map(sale => ({
-      id: sale.id,
-      date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
-      company: sale.company_name,
-      seller: 'N/A',
-      type: 'Sem contrato',
-      recurring: sale.recurring_value || 0,
-      setup: sale.setup_value || 0,
-      prizeBase: sale.prize_base || 0,
-      prize: sale.prize_value || 0
-    }));
+    const directRows = filteredDirectSales.map(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      const setupPrize = (sale.setup_value || 0) * 0.10;
+      return {
+        id: sale.id,
+        date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+        company: sale.company_name,
+        seller: seller?.name || 'N/A',
+        type: 'Sem contrato',
+        recurring: sale.recurring_value || 0,
+        setup: sale.setup_value || 0,
+        prizeBase: sale.prize_base || 0,
+        prize: setupPrize
+      };
+    });
 
     return {
       totalSales: totalSales + filteredDirectSales.length,
