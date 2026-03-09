@@ -112,7 +112,7 @@ export default function ReportsPage() {
     let filtered = directSales || [];
     filtered = filterByDate(filtered, (sale) => sale.created_at);
     if (effectiveSeller !== 'all') {
-      filtered = filtered.filter((sale) => sale.user_id === effectiveSeller);
+      filtered = filtered.filter((sale) => sale.seller_id === effectiveSeller);
     }
     return filtered;
   }, [directSales, dateRange, effectiveSeller, filterByDate]);
@@ -124,7 +124,7 @@ export default function ReportsPage() {
       return d >= previousPeriodRange.from && d <= previousPeriodRange.to;
     });
     if (effectiveSeller !== 'all') {
-      filtered = filtered.filter(s => s.user_id === effectiveSeller);
+      filtered = filtered.filter(s => s.seller_id === effectiveSeller);
     }
     return filtered;
   }, [directSales, previousPeriodRange, effectiveSeller]);
@@ -140,14 +140,15 @@ export default function ReportsPage() {
     const directRecurring = filteredDirectSales.reduce((sum, s) => sum + (s.recurring_value || 0), 0);
     const directSetup = filteredDirectSales.reduce((sum, s) => sum + (s.setup_value || 0), 0);
     
-    // Calculate prize (using 60% as base rate for now)
-    const totalPrize = totalRecurring * 0.6;
+    // Prize: tier% on recurring + 10% fixed on setup
+    const totalPrize = totalRecurring * 0.6 + totalSetup * 0.10 + directSetup * 0.10;
     const averageTicket = totalSales > 0 ? totalRecurring / totalSales : 0;
 
     const contractRows = closedSales.map(contract => {
       const client = clients?.find(c => c.id === contract.client_id);
       const seller = sellers.find(s => s.id === contract.seller_id);
-      const prize = (contract.recurring_total_discounted || 0) * 0.6;
+      const recurringPrize = (contract.recurring_total_discounted || 0) * 0.6;
+      const setupPrize = (contract.setup_total || 0) * 0.10;
       
       return {
         id: contract.id,
@@ -158,21 +159,25 @@ export default function ReportsPage() {
         recurring: contract.recurring_total_discounted || 0,
         setup: contract.setup_total || 0,
         prizeBase: (contract.recurring_total_discounted || 0) + (contract.setup_total || 0),
-        prize
+        prize: recurringPrize + setupPrize
       };
     });
 
-    const directRows = filteredDirectSales.map(sale => ({
-      id: sale.id,
-      date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
-      company: sale.company_name,
-      seller: 'N/A',
-      type: 'Sem contrato',
-      recurring: sale.recurring_value || 0,
-      setup: sale.setup_value || 0,
-      prizeBase: sale.prize_base || 0,
-      prize: sale.prize_value || 0
-    }));
+    const directRows = filteredDirectSales.map(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      const setupPrize = (sale.setup_value || 0) * 0.10;
+      return {
+        id: sale.id,
+        date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+        company: sale.company_name,
+        seller: seller?.name || 'N/A',
+        type: 'Sem contrato',
+        recurring: sale.recurring_value || 0,
+        setup: sale.setup_value || 0,
+        prizeBase: sale.prize_base || 0,
+        prize: setupPrize
+      };
+    });
 
     return {
       totalSales: totalSales + filteredDirectSales.length,
@@ -195,7 +200,8 @@ export default function ReportsPage() {
       + prevDirectSales.reduce((s, d) => s + (d.recurring_value || 0), 0);
     const prevSetup = closedPrev.reduce((s, c) => s + (c.setup_total || 0), 0)
       + prevDirectSales.reduce((s, d) => s + (d.setup_value || 0), 0);
-    const prevPrize = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0) * 0.6;
+    const prevContractRecurring = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0);
+    const prevPrize = prevContractRecurring * 0.6 + prevSetup * 0.10;
     const prevTotal = prevContracts.length;
     const prevClosed = closedPrev.length;
     const prevConversion = prevTotal > 0 ? (prevClosed / prevTotal) * 100 : 0;
@@ -220,16 +226,24 @@ export default function ReportsPage() {
       const sellerContracts = filteredContracts.filter(contract => 
         contract.seller_id === seller.id && contract.sales_status === 'concluido'
       );
+      const sellerDirectSales = filteredDirectSales.filter(s => s.seller_id === seller.id);
       
-      const recurringTotal = sellerContracts.reduce((sum, contract) => 
+      const contractRecurring = sellerContracts.reduce((sum, contract) => 
         sum + (contract.recurring_total_discounted || 0), 0
       );
+      const directRecurring = sellerDirectSales.reduce((sum, s) => sum + (s.recurring_value || 0), 0);
+      const recurringTotal = contractRecurring + directRecurring;
       
       const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
-      const setupTotal = sellerContracts.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
-      const prize = recurringTotal * tier.rate + setupTotal * tier.setupRate;
+      
+      const contractSetup = sellerContracts.reduce((sum, c) => sum + (c.setup_total || 0), 0);
+      const directSetup = sellerDirectSales.reduce((sum, s) => sum + (s.setup_value || 0), 0);
+      const setupTotal = contractSetup + directSetup;
+      
+      // Prize: tier% on recurring + 10% fixed on setup
+      const prize = recurringTotal * tier.rate + setupTotal * 0.10;
 
       // Calculate missing R$ to next tier
       let missingToNextTier = 0;
@@ -257,12 +271,12 @@ export default function ReportsPage() {
         tier: tier.label,
         prize,
         setupTotal,
-        salesCount: sellerContracts.length,
+        salesCount: sellerContracts.length + sellerDirectSales.length,
         missingToNextTier,
         nextTierLabel
       };
     });
-  }, [sellers, filteredContracts, goalsBySeller, tiers, isAdmin, profile]);
+  }, [sellers, filteredContracts, filteredDirectSales, goalsBySeller, tiers, isAdmin, profile]);
 
   // Conversion Data
   const conversionData = useMemo(() => {
