@@ -135,7 +135,7 @@ export default function ReportsPage() {
     const conversionRate = totalProposals > 0 ? (closedSales / totalProposals) * 100 : 0;
 
     const sellerConversion = sellers.map(seller => {
-      const sellerProposals = filteredContracts.filter(contract => contract.user_id === seller.user_id);
+      const sellerProposals = filteredContracts.filter(contract => contract.seller_id === seller.id);
       const sellerClosed = sellerProposals.filter(contract => contract.signed);
       const sellerRate = sellerProposals.length > 0 ? (sellerClosed.length / sellerProposals.length) * 100 : 0;
       
