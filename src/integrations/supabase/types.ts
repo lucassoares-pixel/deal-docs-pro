@@ -119,6 +119,45 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_tiers: {
+        Row: {
+          active: boolean
+          commission_rate: number
+          created_at: string
+          created_by: string
+          id: string
+          label: string
+          max_percentage: number
+          min_percentage: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          commission_rate?: number
+          created_at?: string
+          created_by: string
+          id?: string
+          label: string
+          max_percentage?: number
+          min_percentage?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          commission_rate?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string
+          max_percentage?: number
+          min_percentage?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contract_products: {
         Row: {
           contract_id: string
