@@ -41,6 +41,7 @@ export function useDirectSales() {
       sale_date: string;
       recurring_value: number;
       setup_value: number;
+      seller_id: string;
     }) => {
       const prizeBase = sale.recurring_value + sale.setup_value;
       const prizeValue = prizeBase * 0.10;
