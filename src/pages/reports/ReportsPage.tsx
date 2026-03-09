@@ -407,8 +407,8 @@ export default function ReportsPage() {
                     
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Comissão</p>
-                        <p className="font-semibold">R$ {seller.commission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <p className="text-muted-foreground">Premiação</p>
+                        <p className="font-semibold">R$ {seller.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Atingimento</p>
