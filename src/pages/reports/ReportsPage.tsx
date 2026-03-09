@@ -40,6 +40,7 @@ export default function ReportsPage() {
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
   const selectedYear = dateRange.from ? dateRange.from.getFullYear() : new Date().getFullYear();
   const { goals } = useSellerGoals(selectedMonth, selectedYear);
+  const { getCommissionTier } = useCommissionTiers();
 
   // Map goals by seller_id
   const goalsBySeller = useMemo(() => {
