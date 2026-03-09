@@ -28,16 +28,6 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Commission tiers
-const COMMISSION_TIERS = [
-  { min: 0, max: 50, rate: 0.5, label: '50%' },
-  { min: 51, max: 85, rate: 0.6, label: '60%' },
-  { min: 86, max: Infinity, rate: 0.7, label: '70%' }
-];
-
-const getCommissionTier = (percentage: number) => {
-  return COMMISSION_TIERS.find(tier => percentage >= tier.min && percentage <= tier.max) || COMMISSION_TIERS[0];
-};
 
 export default function ReportsPage() {
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
