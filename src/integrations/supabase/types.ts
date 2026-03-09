@@ -374,6 +374,45 @@ export type Database = {
           },
         ]
       }
+      direct_sales: {
+        Row: {
+          company_name: string
+          created_at: string
+          id: string
+          prize_base: number
+          prize_value: number
+          recurring_value: number
+          sale_date: string
+          sale_type: string
+          setup_value: number
+          user_id: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          id?: string
+          prize_base?: number
+          prize_value?: number
+          recurring_value?: number
+          sale_date?: string
+          sale_type?: string
+          setup_value?: number
+          user_id: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          id?: string
+          prize_base?: number
+          prize_value?: number
+          recurring_value?: number
+          sale_date?: string
+          sale_type?: string
+          setup_value?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       discount_logs: {
         Row: {
           applied_at: string
