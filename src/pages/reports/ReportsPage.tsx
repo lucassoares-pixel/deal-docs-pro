@@ -184,6 +184,26 @@ export default function ReportsPage() {
     };
   }, [filteredContracts, filteredDirectSales, clients, sellers]);
 
+  // Previous period KPIs for comparison
+  const prevKpis = useMemo(() => {
+    const closedPrev = prevContracts.filter(c => c.sales_status === 'concluido');
+    const prevRecurring = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0)
+      + prevDirectSales.reduce((s, d) => s + (d.recurring_value || 0), 0);
+    const prevSetup = closedPrev.reduce((s, c) => s + (c.setup_total || 0), 0)
+      + prevDirectSales.reduce((s, d) => s + (d.setup_value || 0), 0);
+    const prevPrize = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0) * 0.6;
+    const prevTotal = prevContracts.length;
+    const prevClosed = closedPrev.length;
+    const prevConversion = prevTotal > 0 ? (prevClosed / prevTotal) * 100 : 0;
+    return { prevRecurring, prevSetup, prevPrize, prevConversion };
+  }, [prevContracts, prevDirectSales]);
+
+  const calcTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : { value: 0, isPositive: true };
+    const change = ((current - previous) / previous) * 100;
+    return { value: Math.abs(parseFloat(change.toFixed(1))), isPositive: change >= 0 };
+  };
+
   // Seller Performance Data
   const sellerPerformanceData = useMemo(() => {
     const sortedTiers = tiers?.slice().sort((a, b) => a.min_percentage - b.min_percentage) || [];
