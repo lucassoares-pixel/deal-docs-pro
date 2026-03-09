@@ -124,7 +124,7 @@ export default function ReportsPage() {
       return d >= previousPeriodRange.from && d <= previousPeriodRange.to;
     });
     if (effectiveSeller !== 'all') {
-      filtered = filtered.filter(s => s.user_id === effectiveSeller);
+      filtered = filtered.filter(s => s.seller_id === effectiveSeller);
     }
     return filtered;
   }, [directSales, previousPeriodRange, effectiveSeller]);
