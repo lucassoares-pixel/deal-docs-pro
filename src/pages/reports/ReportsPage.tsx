@@ -739,7 +739,7 @@ export default function ReportsPage() {
                   <tbody>
                     {marginData.allRows.length === 0 && (
                       <tr>
-                        <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                        <td colSpan={isAdmin ? 9 : 8} className="text-center py-8 text-muted-foreground">
                           Nenhuma venda encontrada no período
                         </td>
                       </tr>
