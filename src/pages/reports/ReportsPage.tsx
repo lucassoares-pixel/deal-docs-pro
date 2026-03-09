@@ -172,11 +172,12 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Relatórios"
-        subtitle="Análise detalhada de performance e vendas"
-      />
+    <AppLayout>
+      <div className="space-y-8">
+        <PageHeader
+          title="Relatórios"
+          subtitle="Análise detalhada de performance e vendas"
+        />
 
       {/* Filters */}
       <Card>
