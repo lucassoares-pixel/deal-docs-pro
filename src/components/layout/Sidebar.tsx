@@ -27,6 +27,10 @@ const navigation = [
   { name: 'Nova Venda', href: '/sales/new', icon: ShoppingCart },
 ];
 
+const sellerNavigation = [
+  { name: 'Relatórios', href: '/reports', icon: PieChart },
+];
+
 const adminNavigation = [
   { name: 'Relatórios', href: '/reports', icon: PieChart },
   { name: 'Metas', href: '/goals', icon: Target },
