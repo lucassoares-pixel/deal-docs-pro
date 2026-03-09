@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 export interface DirectSale {
   id: string;
   user_id: string;
+  seller_id: string | null;
   company_name: string;
   sale_date: string;
   recurring_value: number;
