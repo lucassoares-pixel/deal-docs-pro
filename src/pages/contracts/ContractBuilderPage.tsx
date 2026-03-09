@@ -439,6 +439,8 @@ export default function ContractBuilderPage() {
           implementation_type: implementationType || 'remota',
           certificate_type: certificateType || null,
           invoice_types: selectedInvoiceTypes,
+          implementation_payment_date: implementationDueDate || null,
+          first_monthly_payment_date: firstMonthlyPaymentDate || null,
         } as any,
         contractProducts,
         discountLogs
