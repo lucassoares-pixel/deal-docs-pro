@@ -226,16 +226,24 @@ export default function ReportsPage() {
       const sellerContracts = filteredContracts.filter(contract => 
         contract.seller_id === seller.id && contract.sales_status === 'concluido'
       );
+      const sellerDirectSales = filteredDirectSales.filter(s => s.seller_id === seller.id);
       
-      const recurringTotal = sellerContracts.reduce((sum, contract) => 
+      const contractRecurring = sellerContracts.reduce((sum, contract) => 
         sum + (contract.recurring_total_discounted || 0), 0
       );
+      const directRecurring = sellerDirectSales.reduce((sum, s) => sum + (s.recurring_value || 0), 0);
+      const recurringTotal = contractRecurring + directRecurring;
       
       const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
-      const setupTotal = sellerContracts.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
-      const prize = recurringTotal * tier.rate + setupTotal * tier.setupRate;
+      
+      const contractSetup = sellerContracts.reduce((sum, c) => sum + (c.setup_total || 0), 0);
+      const directSetup = sellerDirectSales.reduce((sum, s) => sum + (s.setup_value || 0), 0);
+      const setupTotal = contractSetup + directSetup;
+      
+      // Prize: tier% on recurring + 10% fixed on setup
+      const prize = recurringTotal * tier.rate + setupTotal * 0.10;
 
       // Calculate missing R$ to next tier
       let missingToNextTier = 0;
@@ -263,12 +271,12 @@ export default function ReportsPage() {
         tier: tier.label,
         prize,
         setupTotal,
-        salesCount: sellerContracts.length,
+        salesCount: sellerContracts.length + sellerDirectSales.length,
         missingToNextTier,
         nextTierLabel
       };
     });
-  }, [sellers, filteredContracts, goalsBySeller, tiers, isAdmin, profile]);
+  }, [sellers, filteredContracts, filteredDirectSales, goalsBySeller, tiers, isAdmin, profile]);
 
   // Conversion Data
   const conversionData = useMemo(() => {
