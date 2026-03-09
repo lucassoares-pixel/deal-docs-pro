@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,7 +36,7 @@ export function EditDirectSaleDialog({ sale, open, onOpenChange, onSave, sellers
   const [sellerId, setSellerId] = useState('');
 
   // Sync state when sale changes
-  useMemo(() => {
+  useEffect(() => {
     if (sale) {
       setCompanyName(sale.company_name);
       setSaleDate(parseISO(sale.sale_date));
