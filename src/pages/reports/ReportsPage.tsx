@@ -201,9 +201,9 @@ export default function ReportsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os vendedores</SelectItem>
-                  {sellers.map(seller => (
-                    <SelectItem key={seller.id} value={seller.user_id}>
-                      {seller.name}
+                    {sellers.map(seller => (
+                      <SelectItem key={seller.id} value={seller.id}>
+                        {seller.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

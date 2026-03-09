@@ -419,6 +419,7 @@ export default function ContractBuilderPage() {
         {
           client_id: selectedClient.id,
           legal_representative_id: legalRep.id,
+          seller_id: sellerProfileId,
           recurring_total_full: calculations.recurringFull,
           recurring_total_discounted: calculations.recurringWithExtraDiscount,
           setup_total: calculations.implementationTotal,
