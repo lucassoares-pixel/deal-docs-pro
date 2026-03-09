@@ -124,8 +124,8 @@ export default function ReportsPage() {
         sum + (contract.recurring_total_discounted || 0), 0
       );
       
-      // Using a base goal of R$ 10,000 per seller (this could come from database)
-      const goal = 10000;
+      // Use goal from database, fallback to 0 if not defined
+      const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
       const commission = recurringTotal * tier.rate;
@@ -141,7 +141,7 @@ export default function ReportsPage() {
         salesCount: sellerContracts.length
       };
     });
-  }, [sellers, filteredContracts]);
+  }, [sellers, filteredContracts, goalsBySeller]);
 
   // Conversion Data
   const conversionData = useMemo(() => {
