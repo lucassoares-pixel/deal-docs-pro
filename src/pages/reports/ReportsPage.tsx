@@ -130,6 +130,8 @@ export default function ReportsPage() {
         recurringTotal,
         achievement,
         tier: tier.label,
+        prize,
+        setupTotal,
         commission,
         salesCount: sellerContracts.length
       };
