@@ -36,7 +36,7 @@ export function EditDirectSaleDialog({ sale, open, onOpenChange, onSave, sellers
   const [sellerId, setSellerId] = useState('');
 
   // Sync state when sale changes
-  useMemo(() => {
+  useEffect(() => {
     if (sale) {
       setCompanyName(sale.company_name);
       setSaleDate(parseISO(sale.sale_date));
