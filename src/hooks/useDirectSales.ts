@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 export interface DirectSale {
   id: string;
   user_id: string;
+  seller_id: string | null;
   company_name: string;
   sale_date: string;
   recurring_value: number;
@@ -40,6 +41,7 @@ export function useDirectSales() {
       sale_date: string;
       recurring_value: number;
       setup_value: number;
+      seller_id: string;
     }) => {
       const prizeBase = sale.recurring_value + sale.setup_value;
       const prizeValue = prizeBase * 0.10;
@@ -48,6 +50,7 @@ export function useDirectSales() {
         .from('direct_sales')
         .insert({
           user_id: user?.id,
+          seller_id: sale.seller_id,
           company_name: sale.company_name,
           sale_date: sale.sale_date,
           recurring_value: sale.recurring_value,

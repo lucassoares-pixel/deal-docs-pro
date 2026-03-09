@@ -385,6 +385,7 @@ export type Database = {
           recurring_value: number
           sale_date: string
           sale_type: string
+          seller_id: string | null
           setup_value: number
           user_id: string
         }
@@ -398,6 +399,7 @@ export type Database = {
           recurring_value?: number
           sale_date?: string
           sale_type?: string
+          seller_id?: string | null
           setup_value?: number
           user_id: string
         }
@@ -411,10 +413,19 @@ export type Database = {
           recurring_value?: number
           sale_date?: string
           sale_type?: string
+          seller_id?: string | null
           setup_value?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "direct_sales_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       discount_logs: {
         Row: {

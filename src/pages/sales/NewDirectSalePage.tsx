@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,17 +7,28 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarIcon, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDirectSales } from '@/hooks/useDirectSales';
+import { useUsers } from '@/hooks/useUsers';
+import { useAuth } from '@/context/AuthContext';
 
 export default function NewDirectSalePage() {
+  const { profile } = useAuth();
+  const { users } = useUsers();
+  const sellers = useMemo(
+    () => users?.filter(u => u.role === 'sales' && u.active) || [],
+    [users]
+  );
+
   const [companyName, setCompanyName] = useState('');
   const [saleDate, setSaleDate] = useState<Date>(new Date());
   const [recurringValue, setRecurringValue] = useState('');
   const [setupValue, setSetupValue] = useState('');
+  const [sellerId, setSellerId] = useState(profile?.id || '');
   const { createDirectSale } = useDirectSales();
 
   const parseCurrency = (value: string) => {
@@ -37,13 +48,14 @@ export default function NewDirectSalePage() {
   const prize = prizeBase * 0.10;
 
   const handleSubmit = async () => {
-    if (!companyName.trim()) return;
+    if (!companyName.trim() || !sellerId) return;
 
     await createDirectSale.mutateAsync({
       company_name: companyName.trim(),
       sale_date: format(saleDate, 'yyyy-MM-dd'),
       recurring_value: recurring,
       setup_value: setup,
+      seller_id: sellerId,
     });
 
     // Clear form
@@ -51,6 +63,7 @@ export default function NewDirectSalePage() {
     setSaleDate(new Date());
     setRecurringValue('');
     setSetupValue('');
+    setSellerId(profile?.id || '');
   };
 
   return (
@@ -66,6 +79,23 @@ export default function NewDirectSalePage() {
             <CardTitle>Dados da Venda</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Vendedor */}
+            <div className="space-y-2">
+              <Label>Vendedor Responsável</Label>
+              <Select value={sellerId} onValueChange={setSellerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sellers.map(seller => (
+                    <SelectItem key={seller.id} value={seller.id}>
+                      {seller.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Razão Social */}
             <div className="space-y-2">
               <Label htmlFor="company">Razão Social</Label>
@@ -148,7 +178,7 @@ export default function NewDirectSalePage() {
 
             <Button
               onClick={handleSubmit}
-              disabled={!companyName.trim() || createDirectSale.isPending}
+              disabled={!companyName.trim() || !sellerId || createDirectSale.isPending}
               className="w-full gap-2"
             >
               <Plus className="w-4 h-4" />

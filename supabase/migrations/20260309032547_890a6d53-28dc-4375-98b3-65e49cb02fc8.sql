@@ -1,0 +1,1 @@
+ALTER TABLE public.direct_sales ADD COLUMN seller_id uuid REFERENCES public.profiles(id) DEFAULT NULL;
