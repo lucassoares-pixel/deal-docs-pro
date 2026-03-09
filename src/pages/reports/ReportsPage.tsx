@@ -44,7 +44,7 @@ export default function ReportsPage() {
   const { contracts } = useContracts();
   const { users } = useUsers();
   const { clients } = useClients();
-  const { directSales } = useDirectSales();
+  const { directSales, updateCost } = useDirectSales();
 
   // Get month/year from dateRange for goals lookup
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
