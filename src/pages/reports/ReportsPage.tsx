@@ -16,7 +16,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
-import { useDirectSales } from '@/hooks/useDirectSales';
+import { useDirectSales, type DirectSale } from '@/hooks/useDirectSales';
+import { EditDirectSaleDialog } from '@/components/sales/EditDirectSaleDialog';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { differenceInDays, subDays } from 'date-fns';
 import { 
