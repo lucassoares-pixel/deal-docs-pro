@@ -479,6 +479,16 @@ export default function ReportsPage() {
                         <span>Vendido: R$ {seller.recurringTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                       <Progress value={Math.min(seller.achievement, 100)} className="h-2" />
+                      {seller.missingToNextTier > 0 && (
+                        <p className="text-xs font-medium text-amber-600">
+                          Falta R$ {seller.missingToNextTier.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} para a faixa {seller.nextTierLabel}
+                        </p>
+                      )}
+                      {seller.missingToNextTier === 0 && seller.achievement >= 100 && (
+                        <p className="text-xs font-medium text-emerald-600">
+                          🏆 Faixa máxima atingida!
+                        </p>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4 text-sm">
