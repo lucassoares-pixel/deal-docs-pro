@@ -633,6 +633,47 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_goals: {
+        Row: {
+          created_at: string
+          created_by: string
+          goal_value: number
+          id: string
+          month: number
+          seller_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          goal_value?: number
+          id?: string
+          month: number
+          seller_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          goal_value?: number
+          id?: string
+          month?: number
+          seller_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_goals_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supervisor_assignments: {
         Row: {
           created_at: string
