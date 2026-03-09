@@ -422,6 +422,153 @@ export default function CommissionTiersPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Bonus Prizes Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Gift className="w-5 h-5 text-primary" />
+              <div>
+                <CardTitle>Premiação Bônus</CardTitle>
+                <CardDescription>
+                  Prêmios extras por campanhas, desafios ou conquistas especiais
+                </CardDescription>
+              </div>
+            </div>
+            <Button onClick={() => setIsAddingBonus(true)} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Novo Bônus
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Month/Year filter */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Select value={bonusMonth.toString()} onValueChange={(v) => setBonusMonth(parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <Select value={bonusYear.toString()} onValueChange={(v) => setBonusYear(parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - 2 + i).map((y) => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Add bonus form */}
+            {isAddingBonus && (
+              <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Select
+                    value={newBonus.seller_id}
+                    onValueChange={(v) => setNewBonus({ ...newBonus, seller_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Vendedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sellers.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Descrição (ex: Campanha X)"
+                    value={newBonus.description}
+                    onChange={(e) => setNewBonus({ ...newBonus, description: e.target.value })}
+                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                    <Input
+                      type="number"
+                      placeholder="Valor"
+                      value={newBonus.value || ''}
+                      onChange={(e) => setNewBonus({ ...newBonus, value: Number(e.target.value) })}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button size="sm" variant="ghost" onClick={() => setIsAddingBonus(false)}>Cancelar</Button>
+                  <Button size="sm" onClick={handleAddBonus} disabled={createBonus.isPending}>
+                    <Save className="w-4 h-4 mr-1" /> Salvar
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Bonus list */}
+            {bonusLoading ? (
+              <p className="text-muted-foreground">Carregando...</p>
+            ) : !bonuses?.length ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">
+                Nenhum bônus lançado em {MONTHS.find((m) => m.value === bonusMonth)?.label} {bonusYear}
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vendedor</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bonuses.map((bonus) => {
+                    const seller = sellers.find((s) => s.id === bonus.seller_id);
+                    return (
+                      <TableRow key={bonus.id}>
+                        <TableCell className="font-medium">{seller?.name || 'N/A'}</TableCell>
+                        <TableCell>{bonus.description}</TableCell>
+                        <TableCell className="font-semibold text-primary">
+                          R$ {bonus.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost">
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remover bônus?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O bônus "{bonus.description}" de R$ {bonus.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} será removido.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteBonus.mutateAsync(bonus.id)}>
+                                  Confirmar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );
