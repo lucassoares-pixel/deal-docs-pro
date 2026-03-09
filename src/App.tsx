@@ -20,6 +20,7 @@ import UsersPage from "./pages/users/UsersPage";
 import AuthPage from "./pages/auth/AuthPage";
 import SelectionFieldsPage from "./pages/settings/SelectionFieldsPage";
 import ReportsPage from "./pages/reports/ReportsPage";
+import GoalsPage from "./pages/goals/GoalsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
