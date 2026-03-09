@@ -312,7 +312,7 @@ export default function ReportsPage() {
 
     const contractRows = closedContracts.map(contract => {
       const client = clients?.find(c => c.id === contract.client_id);
-      const revenue = (contract.recurring_total_discounted || 0) + (contract.setup_total || 0);
+      const revenue = contract.recurring_total_discounted || 0;
       // For contracts, we'd need product cost_price - mark as N/A if not available
       // This is a simplification; ideally sum cost_price * qty from contract_products
       return {
@@ -329,7 +329,7 @@ export default function ReportsPage() {
     });
 
     const directRows = filteredDirectSales.map(sale => {
-      const revenue = (sale.recurring_value || 0) + (sale.setup_value || 0);
+      const revenue = sale.recurring_value || 0;
       const cost = sale.cost_value;
       const margin = cost != null ? revenue - cost : null;
       const marginPct = cost != null && revenue > 0 ? ((revenue - cost) / revenue) * 100 : null;
