@@ -140,14 +140,24 @@ export default function ReportsPage() {
     const directRecurring = filteredDirectSales.reduce((sum, s) => sum + (s.recurring_value || 0), 0);
     const directSetup = filteredDirectSales.reduce((sum, s) => sum + (s.setup_value || 0), 0);
     
-    // Prize: tier% on recurring + 10% fixed on setup
-    const totalPrize = totalRecurring * 0.6 + totalSetup * 0.10 + directSetup * 0.10;
     const averageTicket = totalSales > 0 ? totalRecurring / totalSales : 0;
+
+    // Helper: get tier rate for a seller based on their goal achievement
+    const getSellerTierRate = (sellerId: string) => {
+      const sellerContracts = closedSales.filter(c => c.seller_id === sellerId);
+      const sellerDirectSales = filteredDirectSales.filter(s => s.seller_id === sellerId);
+      const recurringTotal = sellerContracts.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0)
+        + sellerDirectSales.reduce((s, d) => s + (d.recurring_value || 0), 0);
+      const goal = goals?.find(g => g.seller_id === sellerId)?.goal_value || 0;
+      const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
+      return getCommissionTier(achievement);
+    };
 
     const contractRows = closedSales.map(contract => {
       const client = clients?.find(c => c.id === contract.client_id);
       const seller = sellers.find(s => s.id === contract.seller_id);
-      const recurringPrize = (contract.recurring_total_discounted || 0) * 0.6;
+      const tier = getSellerTierRate(contract.seller_id);
+      const recurringPrize = (contract.recurring_total_discounted || 0) * tier.rate;
       const setupPrize = (contract.setup_total || 0) * 0.10;
       
       return {
@@ -165,6 +175,8 @@ export default function ReportsPage() {
 
     const directRows = filteredDirectSales.map(sale => {
       const seller = sellers.find(s => s.id === sale.seller_id);
+      const tier = sale.seller_id ? getSellerTierRate(sale.seller_id) : { rate: 0, label: 'N/A' };
+      const recurringPrize = (sale.recurring_value || 0) * tier.rate;
       const setupPrize = (sale.setup_value || 0) * 0.10;
       return {
         id: sale.id,
@@ -174,10 +186,18 @@ export default function ReportsPage() {
         type: 'Sem contrato',
         recurring: sale.recurring_value || 0,
         setup: sale.setup_value || 0,
-        prizeBase: sale.prize_base || 0,
-        prize: setupPrize
+        prizeBase: (sale.recurring_value || 0) + (sale.setup_value || 0),
+        prize: recurringPrize + setupPrize
       };
     });
+
+    const allRows = [...contractRows, ...directRows].sort((a, b) => {
+      const da = a.date.split('/').reverse().join('-');
+      const db = b.date.split('/').reverse().join('-');
+      return db.localeCompare(da);
+    });
+
+    const totalPrize = allRows.reduce((s, r) => s + r.prize, 0);
 
     return {
       totalSales: totalSales + filteredDirectSales.length,
@@ -185,13 +205,9 @@ export default function ReportsPage() {
       totalSetup: totalSetup + directSetup,
       totalPrize,
       averageTicket,
-      salesData: [...contractRows, ...directRows].sort((a, b) => {
-        const da = a.date.split('/').reverse().join('-');
-        const db = b.date.split('/').reverse().join('-');
-        return db.localeCompare(da);
-      })
+      salesData: allRows
     };
-  }, [filteredContracts, filteredDirectSales, clients, sellers]);
+  }, [filteredContracts, filteredDirectSales, clients, sellers, goals, getCommissionTier]);
 
   // Previous period KPIs for comparison
   const prevKpis = useMemo(() => {
@@ -200,13 +216,14 @@ export default function ReportsPage() {
       + prevDirectSales.reduce((s, d) => s + (d.recurring_value || 0), 0);
     const prevSetup = closedPrev.reduce((s, c) => s + (c.setup_total || 0), 0)
       + prevDirectSales.reduce((s, d) => s + (d.setup_value || 0), 0);
-    const prevContractRecurring = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0);
-    const prevPrize = prevContractRecurring * 0.6 + prevSetup * 0.10;
+    // Use a default mid-tier rate for previous period comparison
+    const defaultTier = getCommissionTier(70);
+    const prevPrize = prevRecurring * defaultTier.rate + prevSetup * 0.10;
     const prevTotal = prevContracts.length;
     const prevClosed = closedPrev.length;
     const prevConversion = prevTotal > 0 ? (prevClosed / prevTotal) * 100 : 0;
     return { prevRecurring, prevSetup, prevPrize, prevConversion };
-  }, [prevContracts, prevDirectSales]);
+  }, [prevContracts, prevDirectSales, getCommissionTier]);
 
   const calcTrend = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : { value: 0, isPositive: true };
