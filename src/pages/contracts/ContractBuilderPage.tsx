@@ -339,6 +339,10 @@ export default function ContractBuilderPage() {
         toast.error('Selecione um cliente');
         return false;
       }
+      if (!sellerProfileId) {
+        toast.error('Selecione um vendedor');
+        return false;
+      }
     } else if (step === 'products') {
       if (selectedProducts.length === 0) {
         toast.error('Selecione pelo menos um produto');

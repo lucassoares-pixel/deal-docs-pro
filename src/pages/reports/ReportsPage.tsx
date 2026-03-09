@@ -82,7 +82,7 @@ export default function ReportsPage() {
       averageTicket,
       salesData: closedSales.map(contract => {
         const client = clients?.find(c => c.id === contract.client_id);
-        const seller = sellers.find(s => s.user_id === contract.user_id);
+        const seller = sellers.find(s => s.id === contract.seller_id);
         const commission = (contract.recurring_total_discounted || 0) * 0.6;
         
         return {
