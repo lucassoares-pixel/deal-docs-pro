@@ -25,6 +25,7 @@ const navigation = [
 
 const adminNavigation = [
   { name: 'Relatórios', href: '/reports', icon: PieChart },
+  { name: 'Metas', href: '/goals', icon: Target },
   { name: 'Usuários', href: '/users', icon: Users },
   { name: 'Campos de Seleção', href: '/settings/fields', icon: Settings2 },
   { name: 'Histórico', href: '/audit', icon: History },
