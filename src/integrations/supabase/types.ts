@@ -196,6 +196,7 @@ export type Database = {
           legal_representative_id: string | null
           recurring_total_discounted: number
           recurring_total_full: number
+          sales_status: string | null
           setup_total: number
           signed: boolean
           start_date: string
@@ -221,6 +222,7 @@ export type Database = {
           legal_representative_id?: string | null
           recurring_total_discounted?: number
           recurring_total_full?: number
+          sales_status?: string | null
           setup_total?: number
           signed?: boolean
           start_date: string
@@ -246,6 +248,7 @@ export type Database = {
           legal_representative_id?: string | null
           recurring_total_discounted?: number
           recurring_total_full?: number
+          sales_status?: string | null
           setup_total?: number
           signed?: boolean
           start_date?: string
@@ -533,6 +536,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sales_commissions: {
+        Row: {
+          commission_percentage: number
+          commission_value: number
+          contract_id: string
+          created_at: string
+          id: string
+          recurring_value: number
+          sale_date: string
+          setup_commission: number
+          setup_value: number
+          total_commission: number
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          commission_percentage: number
+          commission_value: number
+          contract_id: string
+          created_at?: string
+          id?: string
+          recurring_value: number
+          sale_date: string
+          setup_commission?: number
+          setup_value?: number
+          total_commission: number
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          commission_percentage?: number
+          commission_value?: number
+          contract_id?: string
+          created_at?: string
+          id?: string
+          recurring_value?: number
+          sale_date?: string
+          setup_commission?: number
+          setup_value?: number
+          total_commission?: number
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_commissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       selection_fields: {
         Row: {
