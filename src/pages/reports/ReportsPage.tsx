@@ -112,7 +112,7 @@ export default function ReportsPage() {
     let filtered = directSales || [];
     filtered = filterByDate(filtered, (sale) => sale.created_at);
     if (effectiveSeller !== 'all') {
-      filtered = filtered.filter((sale) => sale.user_id === effectiveSeller);
+      filtered = filtered.filter((sale) => sale.seller_id === effectiveSeller);
     }
     return filtered;
   }, [directSales, dateRange, effectiveSeller, filterByDate]);
