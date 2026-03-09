@@ -723,10 +723,11 @@ export default function ReportsPage() {
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead>
+                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-2 font-medium">Data</th>
                       <th className="text-left py-3 px-2 font-medium">Cliente</th>
+                      <th className="text-left py-3 px-2 font-medium">Vendedor</th>
                       <th className="text-left py-3 px-2 font-medium">Tipo</th>
                       <th className="text-right py-3 px-2 font-medium">Receita</th>
                       <th className="text-right py-3 px-2 font-medium">Custo</th>
