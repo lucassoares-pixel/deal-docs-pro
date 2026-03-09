@@ -272,25 +272,70 @@ export function useContracts() {
     return true;
   };
 
-  const toggleSigned = async (id: string, signed: boolean) => {
+  const toggleSalesStatus = async (id: string, sales_status: 'pendente' | 'concluido') => {
+    const contract = contracts.find(c => c.id === id);
+    if (!contract || !user || !profile) return;
+
     const { error } = await supabase
       .from('contracts')
-      .update({ signed } as any)
+      .update({ sales_status } as any)
       .eq('id', id);
 
     if (error) {
       toast({
-        title: 'Erro ao atualizar assinatura',
+        title: 'Erro ao atualizar status',
         description: error.message,
         variant: 'destructive',
       });
       return;
     }
 
+    // Se o status for concluído, gerar comissão
+    if (sales_status === 'concluido') {
+      const recurring_value = contract.recurring_total_discounted || 0;
+      const setup_value = contract.setup_total || 0;
+      
+      // Lógica de comissão simplificada - adaptar conforme necessidade real
+      let commission_percentage = 0;
+      if (recurring_value > 0) {
+          // Valores fictícios para exemplo. Ideal seria buscar a meta do usuário
+          commission_percentage = 50; 
+      }
+      
+      const commission_value = (recurring_value * commission_percentage) / 100;
+      const setup_commission = (setup_value * 10) / 100; // 10% fixo sobre setup
+      const total_commission = commission_value + setup_commission;
+
+      const { error: commissionError } = await supabase
+        .from('sales_commissions')
+        .insert({
+          contract_id: id,
+          user_id: contract.user_id,
+          user_name: profile.name || user.email || 'Vendedor',
+          sale_date: new Date().toISOString().split('T')[0],
+          recurring_value,
+          setup_value,
+          commission_percentage,
+          commission_value,
+          setup_commission,
+          total_commission
+        });
+
+        if(commissionError) {
+             console.error('Erro ao gerar comissão:', commissionError);
+        }
+    } else {
+        // Se voltou para pendente, remover a comissão gerada
+        await supabase
+        .from('sales_commissions')
+        .delete()
+        .eq('contract_id', id);
+    }
+
     await fetchContracts();
     toast({
-      title: signed ? 'Contrato assinado' : 'Assinatura removida',
-      description: signed ? 'Receita confirmada com contrato assinado.' : 'Marcação de assinatura removida.',
+      title: sales_status === 'concluido' ? 'Venda Concluída' : 'Status alterado para pendente',
+      description: sales_status === 'concluido' ? 'Comissão gerada com sucesso.' : 'Comissão removida.',
     });
   };
 
@@ -306,7 +351,7 @@ export function useContracts() {
     updateContract,
     updateContractStatus,
     deleteContract,
-    toggleSigned,
+    toggleSalesStatus,
     getContractById,
     getContractsByClientId,
     refetch: fetchContracts,
