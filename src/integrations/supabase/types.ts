@@ -190,7 +190,9 @@ export type Database = {
           extra_discount_period_type: string | null
           extra_discount_value: number | null
           fidelity_months: number
+          first_monthly_payment_date: string | null
           id: string
+          implementation_payment_date: string | null
           implementation_type: string | null
           invoice_types: string[] | null
           legal_representative_id: string | null
@@ -217,7 +219,9 @@ export type Database = {
           extra_discount_period_type?: string | null
           extra_discount_value?: number | null
           fidelity_months?: number
+          first_monthly_payment_date?: string | null
           id?: string
+          implementation_payment_date?: string | null
           implementation_type?: string | null
           invoice_types?: string[] | null
           legal_representative_id?: string | null
@@ -244,7 +248,9 @@ export type Database = {
           extra_discount_period_type?: string | null
           extra_discount_value?: number | null
           fidelity_months?: number
+          first_monthly_payment_date?: string | null
           id?: string
+          implementation_payment_date?: string | null
           implementation_type?: string | null
           invoice_types?: string[] | null
           legal_representative_id?: string | null
