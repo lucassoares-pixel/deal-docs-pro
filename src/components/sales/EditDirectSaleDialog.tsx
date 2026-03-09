@@ -28,7 +28,7 @@ interface EditDirectSaleDialogProps {
   isPending?: boolean;
 }
 
-export function EditDirectSaleDialog({ sale, open, onOpenChange, onSave, sellers, isPending }: EditDirectSaleDialogProps) {
+const EditDirectSaleDialog = ({ sale, open, onOpenChange, onSave, sellers, isPending }: EditDirectSaleDialogProps) => {
   const [companyName, setCompanyName] = useState('');
   const [saleDate, setSaleDate] = useState<Date>(new Date());
   const [recurringValue, setRecurringValue] = useState('');
