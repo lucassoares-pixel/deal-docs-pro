@@ -253,8 +253,8 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="space-y-8">
         <PageHeader
-          title="Relatórios"
-          subtitle="Análise detalhada de performance e vendas"
+          title={isAdmin ? "Relatórios" : "Meus Resultados"}
+          subtitle={isAdmin ? "Análise detalhada de performance e vendas" : "Acompanhe seus números e performance"}
         />
 
       {/* Filters */}
