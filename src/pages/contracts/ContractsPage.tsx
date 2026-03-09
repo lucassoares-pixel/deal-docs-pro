@@ -77,6 +77,8 @@ export default function ContractsPage() {
       implementation_type: contract.implementation_type,
       certificate_type: contract.certificate_type,
       invoice_types: contract.invoice_types,
+      implementation_payment_date: contract.implementation_payment_date,
+      first_monthly_payment_date: contract.first_monthly_payment_date,
       status: contract.status as any,
       created_at: contract.created_at,
       updated_at: contract.updated_at,
