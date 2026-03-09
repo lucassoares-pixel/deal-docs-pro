@@ -45,6 +45,20 @@ export default function ReportsPage() {
   const { users } = useUsers();
   const { clients } = useClients();
 
+  // Get month/year from dateRange for goals lookup
+  const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
+  const selectedYear = dateRange.from ? dateRange.from.getFullYear() : new Date().getFullYear();
+  const { goals } = useSellerGoals(selectedMonth, selectedYear);
+
+  // Map goals by seller_id
+  const goalsBySeller = useMemo(() => {
+    const result: Record<string, number> = {};
+    goals?.forEach((goal) => {
+      result[goal.seller_id] = goal.goal_value;
+    });
+    return result;
+  }, [goals]);
+
   const sellers = useMemo(
     () => users?.filter((user) => user.role === 'sales' && user.active) || [],
     [users],
