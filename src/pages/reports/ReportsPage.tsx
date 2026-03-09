@@ -14,6 +14,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
+import { useDirectSales } from '@/hooks/useDirectSales';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { 
   TrendingUp, 
@@ -35,6 +36,7 @@ export default function ReportsPage() {
   const { contracts } = useContracts();
   const { users } = useUsers();
   const { clients } = useClients();
+  const { directSales } = useDirectSales();
 
   // Get month/year from dateRange for goals lookup
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
@@ -70,6 +72,16 @@ export default function ReportsPage() {
     return filtered;
   }, [contracts, dateRange, selectedSeller, filterByDate]);
 
+  // Filter direct sales by date
+  const filteredDirectSales = useMemo(() => {
+    let filtered = directSales || [];
+    filtered = filterByDate(filtered, (sale) => sale.created_at);
+    if (selectedSeller !== 'all') {
+      filtered = filtered.filter((sale) => sale.user_id === selectedSeller);
+    }
+    return filtered;
+  }, [directSales, dateRange, selectedSeller, filterByDate]);
+
   // Financial Report Data
   const financialData = useMemo(() => {
     const closedSales = filteredContracts.filter(contract => contract.sales_status === 'concluido');
@@ -77,33 +89,57 @@ export default function ReportsPage() {
     const totalRecurring = closedSales.reduce((sum, contract) => sum + (contract.recurring_total_discounted || 0), 0);
     const totalSetup = closedSales.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
     
+    // Direct sales totals
+    const directRecurring = filteredDirectSales.reduce((sum, s) => sum + (s.recurring_value || 0), 0);
+    const directSetup = filteredDirectSales.reduce((sum, s) => sum + (s.setup_value || 0), 0);
+    
     // Calculate prize (using 60% as base rate for now)
     const totalPrize = totalRecurring * 0.6;
     const averageTicket = totalSales > 0 ? totalRecurring / totalSales : 0;
 
+    const contractRows = closedSales.map(contract => {
+      const client = clients?.find(c => c.id === contract.client_id);
+      const seller = sellers.find(s => s.id === contract.seller_id);
+      const prize = (contract.recurring_total_discounted || 0) * 0.6;
+      
+      return {
+        id: contract.id,
+        date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
+        company: client?.company_name || 'N/A',
+        seller: seller?.name || 'N/A',
+        type: 'Contrato',
+        recurring: contract.recurring_total_discounted || 0,
+        setup: contract.setup_total || 0,
+        prizeBase: (contract.recurring_total_discounted || 0) + (contract.setup_total || 0),
+        prize
+      };
+    });
+
+    const directRows = filteredDirectSales.map(sale => ({
+      id: sale.id,
+      date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+      company: sale.company_name,
+      seller: 'N/A',
+      type: 'Sem contrato',
+      recurring: sale.recurring_value || 0,
+      setup: sale.setup_value || 0,
+      prizeBase: sale.prize_base || 0,
+      prize: sale.prize_value || 0
+    }));
+
     return {
-      totalSales,
-      totalRecurring,
-      totalSetup,
+      totalSales: totalSales + filteredDirectSales.length,
+      totalRecurring: totalRecurring + directRecurring,
+      totalSetup: totalSetup + directSetup,
       totalPrize,
       averageTicket,
-      salesData: closedSales.map(contract => {
-        const client = clients?.find(c => c.id === contract.client_id);
-        const seller = sellers.find(s => s.id === contract.seller_id);
-        const prize = (contract.recurring_total_discounted || 0) * 0.6;
-        
-        return {
-          id: contract.id,
-          date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
-          company: client?.company_name || 'N/A',
-          seller: seller?.name || 'N/A',
-          recurring: contract.recurring_total_discounted || 0,
-          setup: contract.setup_total || 0,
-          prize
-        };
+      salesData: [...contractRows, ...directRows].sort((a, b) => {
+        const da = a.date.split('/').reverse().join('-');
+        const db = b.date.split('/').reverse().join('-');
+        return db.localeCompare(da);
       })
     };
-  }, [filteredContracts, clients, sellers]);
+  }, [filteredContracts, filteredDirectSales, clients, sellers]);
 
   // Seller Performance Data
   const sellerPerformanceData = useMemo(() => {
@@ -304,8 +340,8 @@ export default function ReportsPage() {
               <DataTable
                 columns={[
                   { key: 'date', header: 'Data' },
-                  { key: 'company', header: 'Empresa' },
-                  { key: 'seller', header: 'Vendedor' },
+                  { key: 'company', header: 'Cliente' },
+                  { key: 'type', header: 'Tipo' },
                   { 
                     key: 'recurring', 
                     header: 'Recorrência',
@@ -317,8 +353,13 @@ export default function ReportsPage() {
                     render: (item) => `R$ ${item.setup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   },
                   { 
+                    key: 'prizeBase', 
+                    header: 'Base do Prêmio',
+                    render: (item) => `R$ ${item.prizeBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                  },
+                  { 
                     key: 'prize', 
-                    header: 'Premiação',
+                    header: 'Prêmio',
                     render: (item) => `R$ ${item.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   }
                 ]}

@@ -10,7 +10,8 @@ import {
   Settings2,
   PieChart,
   Target,
-  Award
+  Award,
+  ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Produtos', href: '/products', icon: Package },
   { name: 'Contratos', href: '/contracts', icon: FileText },
   { name: 'Novo Contrato', href: '/contracts/new', icon: Plus },
+  { name: 'Nova Venda', href: '/sales/new', icon: ShoppingCart },
 ];
 
 const adminNavigation = [
