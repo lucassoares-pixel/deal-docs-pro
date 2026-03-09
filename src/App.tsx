@@ -21,6 +21,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import SelectionFieldsPage from "./pages/settings/SelectionFieldsPage";
 import ReportsPage from "./pages/reports/ReportsPage";
 import GoalsPage from "./pages/goals/GoalsPage";
+import CommissionTiersPage from "./pages/settings/CommissionTiersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/settings/fields" element={<ProtectedRoute><SelectionFieldsPage /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
             <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
+            <Route path="/settings/commission" element={<ProtectedRoute><CommissionTiersPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

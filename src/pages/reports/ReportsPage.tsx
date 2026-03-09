@@ -13,6 +13,7 @@ import { useContracts } from '@/hooks/useContracts';
 import { useUsers } from '@/hooks/useUsers';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
+import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { 
   TrendingUp, 
@@ -27,16 +28,6 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-// Commission tiers
-const COMMISSION_TIERS = [
-  { min: 0, max: 50, rate: 0.5, label: '50%' },
-  { min: 51, max: 85, rate: 0.6, label: '60%' },
-  { min: 86, max: Infinity, rate: 0.7, label: '70%' }
-];
-
-const getCommissionTier = (percentage: number) => {
-  return COMMISSION_TIERS.find(tier => percentage >= tier.min && percentage <= tier.max) || COMMISSION_TIERS[0];
-};
 
 export default function ReportsPage() {
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
@@ -49,6 +40,7 @@ export default function ReportsPage() {
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
   const selectedYear = dateRange.from ? dateRange.from.getFullYear() : new Date().getFullYear();
   const { goals } = useSellerGoals(selectedMonth, selectedYear);
+  const { getCommissionTier } = useCommissionTiers();
 
   // Map goals by seller_id
   const goalsBySeller = useMemo(() => {
