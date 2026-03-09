@@ -208,12 +208,22 @@ export function useContracts() {
   };
 
   const updateContractStatus = async (id: string, status: string) => {
+    // If cancelling a concluded sale, reset sales_status and remove commission
+    const existingContract = contracts.find(c => c.id === id);
+    const wasConcluido = (existingContract as any)?.sales_status === 'concluido';
+    
+    const updatePayload: Record<string, unknown> = { status };
+    if (status === 'cancelled' && wasConcluido) {
+      updatePayload.sales_status = 'pendente';
+      await supabase.from('sales_commissions').delete().eq('contract_id', id);
+    }
+
     const { data, error } = await supabase
       .from('contracts')
-      .update({ status })
+      .update(updatePayload)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       toast({
