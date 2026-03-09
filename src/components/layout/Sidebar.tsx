@@ -84,6 +84,30 @@ export function Sidebar() {
           })}
         </div>
 
+        {!isAdmin && (
+          <div className="pt-4 border-t border-sidebar-border">
+            <p className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-4 mb-2">
+              Meus Resultados
+            </p>
+            {sellerNavigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    'sidebar-nav-item',
+                    isActive && 'active'
+                  )}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span>{item.name}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        )}
+
         {isAdmin && (
           <div className="pt-4 border-t border-sidebar-border">
             <p className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-4 mb-2">
