@@ -292,6 +292,75 @@ export default function ReportsPage() {
     };
   }, [filteredContracts, sellers]);
 
+  // Margin Data
+  const marginData = useMemo(() => {
+    const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
+
+    const contractRows = closedContracts.map(contract => {
+      const client = clients?.find(c => c.id === contract.client_id);
+      const revenue = (contract.recurring_total_discounted || 0) + (contract.setup_total || 0);
+      // For contracts, we'd need product cost_price - mark as N/A if not available
+      // This is a simplification; ideally sum cost_price * qty from contract_products
+      return {
+        id: contract.id,
+        date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
+        company: client?.company_name || 'N/A',
+        type: 'Contrato' as const,
+        revenue,
+        cost: null as number | null,
+        margin: null as number | null,
+        marginPct: null as number | null,
+        isDirectSale: false,
+      };
+    });
+
+    const directRows = filteredDirectSales.map(sale => {
+      const revenue = (sale.recurring_value || 0) + (sale.setup_value || 0);
+      const cost = sale.cost_value;
+      const margin = cost != null ? revenue - cost : null;
+      const marginPct = cost != null && revenue > 0 ? ((revenue - cost) / revenue) * 100 : null;
+      return {
+        id: sale.id,
+        date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+        company: sale.company_name,
+        type: 'Sem contrato' as const,
+        revenue,
+        cost,
+        margin,
+        marginPct,
+        isDirectSale: true,
+      };
+    });
+
+    const allRows = [...contractRows, ...directRows].sort((a, b) => {
+      const da = a.date.split('/').reverse().join('-');
+      const db = b.date.split('/').reverse().join('-');
+      return db.localeCompare(da);
+    });
+
+    const totalRevenue = allRows.reduce((s, r) => s + r.revenue, 0);
+    const rowsWithCost = allRows.filter(r => r.cost != null);
+    const totalCost = rowsWithCost.reduce((s, r) => s + (r.cost || 0), 0);
+    const totalMargin = rowsWithCost.reduce((s, r) => s + (r.margin || 0), 0);
+    const avgMarginPct = totalRevenue > 0 && rowsWithCost.length > 0
+      ? (totalMargin / rowsWithCost.reduce((s, r) => s + r.revenue, 0)) * 100 : 0;
+
+    return { allRows, totalRevenue, totalCost, totalMargin, avgMarginPct };
+  }, [filteredContracts, filteredDirectSales, clients]);
+
+  const handleSaveCost = useCallback((saleId: string) => {
+    const val = editingCosts[saleId];
+    if (val === undefined) return;
+    const parsed = parseFloat(val.replace(',', '.'));
+    if (isNaN(parsed)) return;
+    updateCost.mutate({ id: saleId, cost_value: parsed });
+    setEditingCosts(prev => {
+      const next = { ...prev };
+      delete next[saleId];
+      return next;
+    });
+  }, [editingCosts, updateCost]);
+
   const exportToCSV = (data: any[], filename: string) => {
     const csv = [
       Object.keys(data[0]).join(','),
