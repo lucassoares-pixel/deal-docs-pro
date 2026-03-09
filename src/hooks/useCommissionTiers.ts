@@ -8,6 +8,7 @@ export interface CommissionTier {
   min_percentage: number;
   max_percentage: number;
   commission_rate: number;
+  setup_prize_rate: number;
   label: string;
   sort_order: number;
   active: boolean;
@@ -112,18 +113,17 @@ export function useCommissionTiers() {
     },
   });
 
-  // Helper function to get commission tier based on achievement percentage
+  // Helper function to get prize tier based on achievement percentage
   const getCommissionTier = (percentage: number) => {
     if (!tiers || tiers.length === 0) {
-      // Fallback to default if no tiers
-      return { rate: 0.5, label: '50%' };
+      return { rate: 0.5, setupRate: 0.1, label: '50%' };
     }
     const tier = tiers.find(
       (t) => percentage >= t.min_percentage && percentage <= t.max_percentage
     );
-    return tier 
-      ? { rate: tier.commission_rate, label: tier.label }
-      : { rate: tiers[0].commission_rate, label: tiers[0].label };
+    return tier
+      ? { rate: tier.commission_rate, setupRate: tier.setup_prize_rate, label: tier.label }
+      : { rate: tiers[0].commission_rate, setupRate: tiers[0].setup_prize_rate, label: tiers[0].label };
   };
 
   return {

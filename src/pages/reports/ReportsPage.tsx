@@ -77,20 +77,20 @@ export default function ReportsPage() {
     const totalRecurring = closedSales.reduce((sum, contract) => sum + (contract.recurring_total_discounted || 0), 0);
     const totalSetup = closedSales.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
     
-    // Calculate commission (using 60% as base rate for now)
-    const totalCommission = totalRecurring * 0.6;
+    // Calculate prize (using 60% as base rate for now)
+    const totalPrize = totalRecurring * 0.6;
     const averageTicket = totalSales > 0 ? totalRecurring / totalSales : 0;
 
     return {
       totalSales,
       totalRecurring,
       totalSetup,
-      totalCommission,
+      totalPrize,
       averageTicket,
       salesData: closedSales.map(contract => {
         const client = clients?.find(c => c.id === contract.client_id);
         const seller = sellers.find(s => s.id === contract.seller_id);
-        const commission = (contract.recurring_total_discounted || 0) * 0.6;
+        const prize = (contract.recurring_total_discounted || 0) * 0.6;
         
         return {
           id: contract.id,
@@ -99,7 +99,7 @@ export default function ReportsPage() {
           seller: seller?.name || 'N/A',
           recurring: contract.recurring_total_discounted || 0,
           setup: contract.setup_total || 0,
-          commission
+          prize
         };
       })
     };
@@ -120,7 +120,8 @@ export default function ReportsPage() {
       const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
-      const commission = recurringTotal * tier.rate;
+      const setupTotal = sellerContracts.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
+      const prize = recurringTotal * tier.rate + setupTotal * tier.setupRate;
       
       return {
         id: seller.id,
@@ -129,7 +130,8 @@ export default function ReportsPage() {
         recurringTotal,
         achievement,
         tier: tier.label,
-        commission,
+        prize,
+        setupTotal,
         salesCount: sellerContracts.length
       };
     });
@@ -235,8 +237,8 @@ export default function ReportsPage() {
           trend={{ value: 8.2, isPositive: true }}
         />
         <StatCard
-          title="Comissão Total"
-          value={`R$ ${financialData.totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          title="Premiação Total"
+          value={`R$ ${financialData.totalPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Target}
           trend={{ value: 15.3, isPositive: true }}
         />
@@ -275,8 +277,8 @@ export default function ReportsPage() {
               icon={DollarSign}
             />
             <StatCard
-              title="Comissão Gerada"
-              value={`R$ ${financialData.totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              title="Premiação Gerada"
+              value={`R$ ${financialData.totalPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
               icon={Users}
             />
             <StatCard
@@ -315,9 +317,9 @@ export default function ReportsPage() {
                     render: (item) => `R$ ${item.setup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   },
                   { 
-                    key: 'commission', 
-                    header: 'Comissão',
-                    render: (item) => `R$ ${item.commission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    key: 'prize', 
+                    header: 'Premiação',
+                    render: (item) => `R$ ${item.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   }
                 ]}
                 data={financialData.salesData}
@@ -405,8 +407,8 @@ export default function ReportsPage() {
                     
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Comissão</p>
-                        <p className="font-semibold">R$ {seller.commission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <p className="text-muted-foreground">Premiação</p>
+                        <p className="font-semibold">R$ {seller.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Atingimento</p>
