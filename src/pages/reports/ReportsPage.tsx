@@ -402,6 +402,87 @@ export default function ReportsPage() {
     return { allRows, totalRevenue, totalCost, totalMargin, avgMarginPct };
   }, [filteredContracts, filteredDirectSales, clients, sellers]);
 
+  // Discount Data per Seller
+  const discountData = useMemo(() => {
+    const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
+
+    // Build per-seller discount stats
+    const sellerDiscounts = sellers.map(seller => {
+      const sellerContracts = closedContracts.filter(c => c.seller_id === seller.id);
+      
+      let totalFullPrice = 0;
+      let totalDiscountedPrice = 0;
+      let totalDiscountValue = 0;
+      let contractsWithDiscount = 0;
+      let productDiscounts: { discount: number; weight: number }[] = [];
+
+      sellerContracts.forEach(contract => {
+        const fullPrice = contract.recurring_total_full || 0;
+        const discountedPrice = contract.recurring_total_discounted || 0;
+        const discountValue = fullPrice - discountedPrice;
+
+        totalFullPrice += fullPrice;
+        totalDiscountedPrice += discountedPrice;
+        totalDiscountValue += discountValue;
+
+        if (discountValue > 0) {
+          contractsWithDiscount++;
+        }
+
+        // Collect product-level discounts for weighted average
+        contract.products?.forEach(cp => {
+          if (cp.discount_percentage > 0) {
+            productDiscounts.push({
+              discount: cp.discount_percentage,
+              weight: cp.full_price * (cp.quantity || 1)
+            });
+          }
+        });
+      });
+
+      // Weighted average discount %
+      const totalWeight = productDiscounts.reduce((s, p) => s + p.weight, 0);
+      const weightedAvgDiscount = totalWeight > 0
+        ? productDiscounts.reduce((s, p) => s + (p.discount * p.weight), 0) / totalWeight
+        : 0;
+
+      // Simple average discount % based on totals
+      const avgDiscountPct = totalFullPrice > 0
+        ? ((totalFullPrice - totalDiscountedPrice) / totalFullPrice) * 100
+        : 0;
+
+      return {
+        id: seller.id,
+        name: seller.name,
+        totalContracts: sellerContracts.length,
+        contractsWithDiscount,
+        totalFullPrice,
+        totalDiscountedPrice,
+        totalDiscountValue,
+        avgDiscountPct,
+        weightedAvgDiscount
+      };
+    }).filter(s => s.totalContracts > 0);
+
+    // Global totals
+    const globalFullPrice = sellerDiscounts.reduce((s, d) => s + d.totalFullPrice, 0);
+    const globalDiscountedPrice = sellerDiscounts.reduce((s, d) => s + d.totalDiscountedPrice, 0);
+    const globalDiscountValue = sellerDiscounts.reduce((s, d) => s + d.totalDiscountValue, 0);
+    const globalAvgDiscountPct = globalFullPrice > 0
+      ? ((globalFullPrice - globalDiscountedPrice) / globalFullPrice) * 100
+      : 0;
+    const totalContractsWithDiscount = sellerDiscounts.reduce((s, d) => s + d.contractsWithDiscount, 0);
+
+    return {
+      sellerDiscounts,
+      globalFullPrice,
+      globalDiscountedPrice,
+      globalDiscountValue,
+      globalAvgDiscountPct,
+      totalContractsWithDiscount
+    };
+  }, [filteredContracts, sellers]);
+
   const handleSaveCost = useCallback((saleId: string) => {
     const val = editingCosts[saleId];
     if (val === undefined) return;
