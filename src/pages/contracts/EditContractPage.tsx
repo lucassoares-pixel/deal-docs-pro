@@ -54,6 +54,9 @@ export default function EditContractPage() {
   const [extraDiscountMonths, setExtraDiscountMonths] = useState<string>('');
   const [extraDiscountEndDate, setExtraDiscountEndDate] = useState<string>('');
 
+  const [implementationDueDate, setImplementationDueDate] = useState('');
+  const [firstMonthlyPaymentDate, setFirstMonthlyPaymentDate] = useState('');
+
   const contract = id ? getContractById(id) : undefined;
 
   // Initialize form from existing contract

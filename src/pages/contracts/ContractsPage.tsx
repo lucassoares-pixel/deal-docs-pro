@@ -37,6 +37,11 @@ export default function ContractsPage() {
     }).format(value);
   };
 
+  const parseDateOnly = (value?: string | null) => {
+    if (!value) return null;
+    return new Date(`${value}T00:00:00`);
+  };
+
   const toPdfContract = (contract: ContractWithDetails) => {
     if (!contract.client) throw new Error('Contrato sem cliente');
     if (!contract.legal_representative) throw new Error('Contrato sem representante legal');

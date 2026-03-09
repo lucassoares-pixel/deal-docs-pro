@@ -94,6 +94,9 @@ export default function ContractBuilderPage() {
   const [contractTaxRegime, setContractTaxRegime] = useState<string>('');
   const [selectedInvoiceTypes, setSelectedInvoiceTypes] = useState<string[]>([]);
 
+  const [implementationDueDate, setImplementationDueDate] = useState<string>('');
+  const [firstMonthlyPaymentDate, setFirstMonthlyPaymentDate] = useState<string>('');
+
   // Extra discount on subtotal
   const [extraDiscountValue, setExtraDiscountValue] = useState<string>('');
   const [extraDiscountPeriodType, setExtraDiscountPeriodType] = useState<DiscountPeriodType>('indeterminate');

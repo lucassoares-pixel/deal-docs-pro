@@ -338,6 +338,42 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 
   yPos += 5;
 
+  // OBSERVAÇÕES DA VENDA (Datas) - logo abaixo da tabela de produtos
+  if (contract.implementation_payment_date || contract.first_monthly_payment_date) {
+    if (yPos > maxY - 40) {
+      doc.addPage();
+      yPos = addHeader(doc, logo, pageWidth);
+    }
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Observações da venda:', 14, yPos);
+    yPos += 6;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+
+    if (contract.implementation_payment_date) {
+      doc.text(
+        `Data de vencimento da implantação: ${format(new Date(contract.implementation_payment_date + 'T00:00:00'), "dd/MM/yyyy")}`,
+        14,
+        yPos
+      );
+      yPos += 5;
+    }
+
+    if (contract.first_monthly_payment_date) {
+      doc.text(
+        `Data de pagamento da primeira mensalidade: ${format(new Date(contract.first_monthly_payment_date + 'T00:00:00'), "dd/MM/yyyy")}`,
+        14,
+        yPos
+      );
+      yPos += 5;
+    }
+
+    yPos += 8;
+  }
+
   // CLÁUSULA 3 - VIGÊNCIA
   if (yPos > maxY - 40) {
     doc.addPage();
