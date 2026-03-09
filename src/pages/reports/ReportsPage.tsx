@@ -82,6 +82,27 @@ export default function ReportsPage() {
     return filtered;
   }, [contracts, dateRange, effectiveSeller, filterByDate]);
 
+  // Calculate previous period range
+  const previousPeriodRange = useMemo(() => {
+    const days = differenceInDays(dateRange.to, dateRange.from) + 1;
+    return {
+      from: subDays(dateRange.from, days),
+      to: subDays(dateRange.from, 1),
+    };
+  }, [dateRange]);
+
+  // Previous period contracts
+  const prevContracts = useMemo(() => {
+    let filtered = (contracts || []).filter(c => {
+      const d = new Date(c.created_at);
+      return d >= previousPeriodRange.from && d <= previousPeriodRange.to;
+    });
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter(c => c.seller_id === effectiveSeller);
+    }
+    return filtered;
+  }, [contracts, previousPeriodRange, effectiveSeller]);
+
   // Filter direct sales by date
   const filteredDirectSales = useMemo(() => {
     let filtered = directSales || [];
@@ -91,6 +112,18 @@ export default function ReportsPage() {
     }
     return filtered;
   }, [directSales, dateRange, effectiveSeller, filterByDate]);
+
+  // Previous period direct sales
+  const prevDirectSales = useMemo(() => {
+    let filtered = (directSales || []).filter(s => {
+      const d = new Date(s.created_at);
+      return d >= previousPeriodRange.from && d <= previousPeriodRange.to;
+    });
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter(s => s.user_id === effectiveSeller);
+    }
+    return filtered;
+  }, [directSales, previousPeriodRange, effectiveSeller]);
 
   // Financial Report Data
   const financialData = useMemo(() => {
