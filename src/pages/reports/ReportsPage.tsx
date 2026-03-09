@@ -44,22 +44,22 @@ export default function ReportsPage() {
   const { users } = useUsers();
   const { clients } = useClients();
 
-  const sellers = useMemo(() => 
-    users?.filter(user => user.role === 'sales') || [],
-    [users]
+  const sellers = useMemo(
+    () => users?.filter((user) => user.role === 'sales' && user.active) || [],
+    [users],
   );
 
   const filteredContracts = useMemo(() => {
     let filtered = contracts || [];
-    
+
     // Filter by date range
     filtered = filterByDate(filtered, (contract) => contract.created_at);
-    
-    // Filter by seller if selected
+
+    // Filter by seller if selected (by profile id)
     if (selectedSeller !== 'all') {
-      filtered = filtered.filter(contract => contract.user_id === selectedSeller);
+      filtered = filtered.filter((contract) => contract.seller_id === selectedSeller);
     }
-    
+
     return filtered;
   }, [contracts, dateRange, selectedSeller, filterByDate]);
 

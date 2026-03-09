@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -9,16 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useClients } from '@/hooks/useClients';
 import { useProducts } from '@/hooks/useProducts';
 import { useContracts } from '@/hooks/useContracts';
+import { useUsers } from '@/hooks/useUsers';
 import { useAuth } from '@/context/AuthContext';
 import { Tables } from '@/integrations/supabase/types';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Check, 
-  Package, 
-  Users, 
-  FileText, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Package,
+  Users,
+  FileText,
   Plus,
   Minus,
   Percent,
@@ -55,7 +56,29 @@ export default function ContractBuilderPage() {
   const { clients, legalRepresentatives, loading: loadingClients, updateClient } = useClients();
   const { activeProducts, loading: loadingProducts } = useProducts();
   const { addContract } = useContracts();
+  const { users, loading: loadingUsers } = useUsers();
   const { profile } = useAuth();
+
+  const sellerProfiles = useMemo(
+    () => (users || []).filter((u) => u.active && u.role === 'sales'),
+    [users],
+  );
+
+  const [sellerProfileId, setSellerProfileId] = useState<string>('');
+
+  useEffect(() => {
+    if (sellerProfileId) return;
+
+    // Default seller:
+    // - Admin: first available seller
+    // - Seller: self
+    if (profile?.role === 'admin') {
+      if (sellerProfiles.length > 0) setSellerProfileId(sellerProfiles[0].id);
+      return;
+    }
+
+    if (profile?.id) setSellerProfileId(profile.id);
+  }, [profile?.id, profile?.role, sellerProfiles, sellerProfileId]);
 
   const [step, setStep] = useState<Step>('client');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
