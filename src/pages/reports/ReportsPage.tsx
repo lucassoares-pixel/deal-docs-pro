@@ -890,6 +890,157 @@ export default function ReportsPage() {
           </Card>
         </TabsContent>
 
+        {/* Discount Report */}
+        <TabsContent value="discounts" className="space-y-6">
+          {/* KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              title="Desconto Médio Geral"
+              value={`${discountData.globalAvgDiscountPct.toFixed(1)}%`}
+              icon={Percent}
+            />
+            <StatCard
+              title="Total Desconto Concedido"
+              value={`R$ ${discountData.globalDiscountValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={TrendingDown}
+            />
+            <StatCard
+              title="Receita Cheia (Tabela)"
+              value={`R$ ${discountData.globalFullPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={DollarSign}
+            />
+            <StatCard
+              title="Contratos c/ Desconto"
+              value={discountData.totalContractsWithDiscount.toString()}
+              icon={Target}
+            />
+          </div>
+
+          {/* Per-seller table */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Desconto por Vendedor</CardTitle>
+              {discountData.sellerDiscounts.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => exportToCSV(discountData.sellerDiscounts.map(s => ({
+                    vendedor: s.name,
+                    contratos: s.totalContracts,
+                    contratos_com_desconto: s.contractsWithDiscount,
+                    valor_tabela: s.totalFullPrice.toFixed(2),
+                    valor_vendido: s.totalDiscountedPrice.toFixed(2),
+                    total_desconto: s.totalDiscountValue.toFixed(2),
+                    desconto_medio_pct: `${s.avgDiscountPct.toFixed(1)}%`
+                  })), 'desconto-por-vendedor')}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Exportar CSV
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2 font-medium">Vendedor</th>
+                      <th className="text-right py-3 px-2 font-medium">Contratos</th>
+                      <th className="text-right py-3 px-2 font-medium">c/ Desconto</th>
+                      <th className="text-right py-3 px-2 font-medium">Valor Tabela</th>
+                      <th className="text-right py-3 px-2 font-medium">Valor Vendido</th>
+                      <th className="text-right py-3 px-2 font-medium">Desconto R$</th>
+                      <th className="text-right py-3 px-2 font-medium">Desconto %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {discountData.sellerDiscounts.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                          Nenhum dado encontrado no período
+                        </td>
+                      </tr>
+                    )}
+                    {discountData.sellerDiscounts
+                      .sort((a, b) => b.avgDiscountPct - a.avgDiscountPct)
+                      .map(seller => (
+                      <tr key={seller.id} className="border-b hover:bg-muted/50">
+                        <td className="py-3 px-2 font-medium">{seller.name}</td>
+                        <td className="py-3 px-2 text-right">{seller.totalContracts}</td>
+                        <td className="py-3 px-2 text-right">{seller.contractsWithDiscount}</td>
+                        <td className="py-3 px-2 text-right">
+                          R$ {seller.totalFullPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          R$ {seller.totalDiscountedPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right text-destructive font-medium">
+                          - R$ {seller.totalDiscountValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          <span className={`font-semibold px-2 py-1 rounded-full text-xs ${
+                            seller.avgDiscountPct === 0
+                              ? 'bg-muted text-muted-foreground'
+                              : seller.avgDiscountPct <= 10
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : seller.avgDiscountPct <= 20
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {seller.avgDiscountPct.toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  {discountData.sellerDiscounts.length > 0 && (
+                    <tfoot>
+                      <tr className="border-t-2 font-semibold bg-muted/30">
+                        <td className="py-3 px-2">Total</td>
+                        <td className="py-3 px-2 text-right">
+                          {discountData.sellerDiscounts.reduce((s, d) => s + d.totalContracts, 0)}
+                        </td>
+                        <td className="py-3 px-2 text-right">{discountData.totalContractsWithDiscount}</td>
+                        <td className="py-3 px-2 text-right">
+                          R$ {discountData.globalFullPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          R$ {discountData.globalDiscountedPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right text-destructive">
+                          - R$ {discountData.globalDiscountValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right font-bold text-primary">
+                          {discountData.globalAvgDiscountPct.toFixed(1)}%
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Desconto Médio por Vendedor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={discountData.sellerDiscounts.sort((a, b) => b.avgDiscountPct - a.avgDiscountPct)}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis tickFormatter={(v) => `${v}%`} />
+                  <Tooltip
+                    formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Desconto Médio']}
+                  />
+                  <Bar dataKey="avgDiscountPct" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="goals" className="space-y-6">
           <Card>
