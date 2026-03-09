@@ -132,7 +132,7 @@ export default function ReportsPage() {
         tier: tier.label,
         prize,
         setupTotal,
-        commission,
+        salesCount: sellerContracts.length
         salesCount: sellerContracts.length
       };
     });
