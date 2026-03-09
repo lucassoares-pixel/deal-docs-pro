@@ -190,11 +190,20 @@ export default function ContractsPage() {
       render: (contract: ContractWithDetails) => {
         const salesStatus = (contract as any).sales_status || 'pendente';
         return (
-          <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {salesStatus === 'concluido' ? (
-              <span className="badge-success">
-                ✓ Concluído
-              </span>
+              <>
+                <span className="badge-success">✓ Concluído</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs h-6 px-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleSalesStatus(contract.id, 'pendente')}
+                  title="Reverter para pendente"
+                >
+                  Reverter
+                </Button>
+              </>
             ) : (
               <Button
                 size="sm"
