@@ -13,6 +13,7 @@ export interface DirectSale {
   prize_base: number;
   prize_value: number;
   sale_type: string;
+  cost_value: number | null;
   created_at: string;
 }
 
@@ -69,5 +70,25 @@ export function useDirectSales() {
     },
   });
 
-  return { directSales, isLoading, createDirectSale };
+  const updateCost = useMutation({
+    mutationFn: async ({ id, cost_value }: { id: string; cost_value: number }) => {
+      const { data, error } = await supabase
+        .from('direct_sales')
+        .update({ cost_value })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['direct_sales'] });
+      toast({ title: 'Custo atualizado com sucesso' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Erro ao atualizar custo', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  return { directSales, isLoading, createDirectSale, updateCost };
 }
