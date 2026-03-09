@@ -8,7 +8,8 @@ import {
   History,
   LogOut,
   Settings2,
-  PieChart
+  PieChart,
+  Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
