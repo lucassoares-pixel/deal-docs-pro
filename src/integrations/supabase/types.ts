@@ -53,6 +53,47 @@ export type Database = {
         }
         Relationships: []
       }
+      bonus_prizes: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          month: number
+          seller_id: string
+          value: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          month: number
+          seller_id: string
+          value?: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          month?: number
+          seller_id?: string
+          value?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonus_prizes_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address_city: string
