@@ -317,9 +317,9 @@ export default function ReportsPage() {
                     render: (item) => `R$ ${item.setup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   },
                   { 
-                    key: 'commission', 
-                    header: 'Comissão',
-                    render: (item) => `R$ ${item.commission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    key: 'prize', 
+                    header: 'Premiação',
+                    render: (item) => `R$ ${item.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   }
                 ]}
                 data={financialData.salesData}
