@@ -171,7 +171,8 @@ export default function ReportsPage() {
         recurring: contract.recurring_total_discounted || 0,
         setup: contract.setup_total || 0,
         prizeBase: (contract.recurring_total_discounted || 0) + (contract.setup_total || 0),
-        prize: recurringPrize + setupPrize
+        prize: recurringPrize + setupPrize,
+        isDirectSale: false
       };
     });
 
