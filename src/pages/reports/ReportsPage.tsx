@@ -379,10 +379,11 @@ export default function ReportsPage() {
 
       {/* Reports Tabs */}
       <Tabs defaultValue="financial" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="financial">Financeiro Mensal</TabsTrigger>
-          <TabsTrigger value="goals">Meta por Vendedor</TabsTrigger>
-          <TabsTrigger value="conversion">Conversão Comercial</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="financial">Financeiro</TabsTrigger>
+          <TabsTrigger value="margin">Margem</TabsTrigger>
+          <TabsTrigger value="goals">Metas</TabsTrigger>
+          <TabsTrigger value="conversion">Conversão</TabsTrigger>
         </TabsList>
 
         {/* Financial Report */}
