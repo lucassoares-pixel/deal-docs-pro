@@ -65,7 +65,7 @@ export default function ReportsPage() {
 
   // Financial Report Data
   const financialData = useMemo(() => {
-    const closedSales = filteredContracts.filter(contract => contract.signed);
+    const closedSales = filteredContracts.filter(contract => contract.sales_status === 'concluido');
     const totalSales = closedSales.length;
     const totalRecurring = closedSales.reduce((sum, contract) => sum + (contract.recurring_total_discounted || 0), 0);
     const totalSetup = closedSales.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
