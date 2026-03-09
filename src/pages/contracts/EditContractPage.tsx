@@ -231,6 +231,8 @@ export default function EditContractPage() {
           extra_discount_period_type: extraDiscountPeriodType,
           extra_discount_months: extraDiscountPeriodType === 'months' ? parseInt(extraDiscountMonths) || null : null,
           extra_discount_end_date: extraDiscountPeriodType === 'fixed_date' ? extraDiscountEndDate || null : null,
+          implementation_payment_date: implementationDueDate || null,
+          first_monthly_payment_date: firstMonthlyPaymentDate || null,
         },
         contractProducts,
         discountLogs
