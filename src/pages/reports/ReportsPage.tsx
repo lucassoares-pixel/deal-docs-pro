@@ -133,7 +133,6 @@ export default function ReportsPage() {
         prize,
         setupTotal,
         salesCount: sellerContracts.length
-        salesCount: sellerContracts.length
       };
     });
   }, [sellers, filteredContracts, goalsBySeller]);
