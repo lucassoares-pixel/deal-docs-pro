@@ -7,6 +7,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { DataTable } from '@/components/ui/data-table';
 import { DateRangeFilter, useDateRangeFilter } from '@/components/ui/date-range-filter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useContracts } from '@/hooks/useContracts';
 import { useUsers } from '@/hooks/useUsers';
