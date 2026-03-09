@@ -137,13 +137,21 @@ export function useContracts() {
   ) => {
     if (!user) return null;
 
+    // If contract was concluido, reset to pendente and remove commission (addendum = new amendment)
+    const existingContract = contracts.find(c => c.id === id);
+    const wasConcluido = (existingContract as any)?.sales_status === 'concluido';
+    if (wasConcluido) {
+      await supabase.from('sales_commissions').delete().eq('contract_id', id);
+      (contract as any).sales_status = 'pendente';
+    }
+
     // Update contract
     const { data: contractData, error: contractError } = await supabase
       .from('contracts')
       .update(contract)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (contractError) {
       toast({
