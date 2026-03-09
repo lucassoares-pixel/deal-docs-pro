@@ -340,8 +340,8 @@ export default function ReportsPage() {
               <DataTable
                 columns={[
                   { key: 'date', header: 'Data' },
-                  { key: 'company', header: 'Empresa' },
-                  { key: 'seller', header: 'Vendedor' },
+                  { key: 'company', header: 'Cliente' },
+                  { key: 'type', header: 'Tipo' },
                   { 
                     key: 'recurring', 
                     header: 'Recorrência',
@@ -353,8 +353,13 @@ export default function ReportsPage() {
                     render: (item) => `R$ ${item.setup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   },
                   { 
+                    key: 'prizeBase', 
+                    header: 'Base do Prêmio',
+                    render: (item) => `R$ ${item.prizeBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                  },
+                  { 
                     key: 'prize', 
-                    header: 'Premiação',
+                    header: 'Prêmio',
                     render: (item) => `R$ ${item.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                   }
                 ]}
