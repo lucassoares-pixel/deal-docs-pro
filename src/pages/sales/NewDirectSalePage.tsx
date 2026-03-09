@@ -159,20 +159,23 @@ export default function NewDirectSalePage() {
             {/* Campos calculados */}
             <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Base do Prêmio</span>
+                <span className="text-sm font-medium">Mensalidade</span>
                 <span className="text-lg font-semibold">
-                  R$ {prizeBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {recurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-sm font-medium">Prêmio</span>
+                  <span className="text-sm font-medium">Prêmio Implantação</span>
                   <span className="text-xs text-muted-foreground ml-2">(10% fixo)</span>
                 </div>
                 <span className="text-lg font-bold text-primary">
-                  R$ {prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {setupPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
+              <p className="text-xs text-muted-foreground">
+                O prêmio sobre a mensalidade será calculado com base no atingimento da meta do vendedor (faixa de comissão).
+              </p>
             </div>
 
             <Button
