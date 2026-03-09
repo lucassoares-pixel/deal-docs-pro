@@ -353,35 +353,27 @@ export default function ReportsPage() {
           title="Receita Recorrente"
           value={`R$ ${financialData.totalRecurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={TrendingUp}
-          trend={{ value: 12.5, isPositive: true }}
+          trend={calcTrend(financialData.totalRecurring, prevKpis.prevRecurring)}
         />
         <StatCard
           title="Implantação"
           value={`R$ ${financialData.totalSetup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
-          trend={{ value: 8.2, isPositive: true }}
+          trend={calcTrend(financialData.totalSetup, prevKpis.prevSetup)}
         />
         <StatCard
           title="Premiação Total"
           value={`R$ ${financialData.totalPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Target}
-          trend={{ value: 15.3, isPositive: true }}
+          trend={calcTrend(financialData.totalPrize, prevKpis.prevPrize)}
         />
         <StatCard
           title="Conversão"
           value={`${conversionData.conversionRate.toFixed(1)}%`}
           icon={TrendingUp}
-          trend={{ value: conversionData.conversionRate > 25 ? 5.2 : -2.1, isPositive: conversionData.conversionRate > 25 }}
+          trend={calcTrend(conversionData.conversionRate, prevKpis.prevConversion)}
         />
       </div>
-
-      {/* Reports Tabs */}
-      <Tabs defaultValue="financial" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="financial">Financeiro Mensal</TabsTrigger>
-          <TabsTrigger value="goals">Meta por Vendedor</TabsTrigger>
-          <TabsTrigger value="conversion">Conversão Comercial</TabsTrigger>
-        </TabsList>
 
         {/* Financial Report */}
         <TabsContent value="financial" className="space-y-6">
