@@ -29,8 +29,10 @@ import {
   BarChart3,
   TrendingDown,
   Percent,
-  Save
+  Save,
+  Trash2
 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -44,7 +46,7 @@ export default function ReportsPage() {
   const { contracts } = useContracts();
   const { users } = useUsers();
   const { clients } = useClients();
-  const { directSales, updateCost } = useDirectSales();
+  const { directSales, updateCost, deleteDirectSale } = useDirectSales();
 
   // Get month/year from dateRange for goals lookup
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
@@ -169,7 +171,8 @@ export default function ReportsPage() {
         recurring: contract.recurring_total_discounted || 0,
         setup: contract.setup_total || 0,
         prizeBase: (contract.recurring_total_discounted || 0) + (contract.setup_total || 0),
-        prize: recurringPrize + setupPrize
+        prize: recurringPrize + setupPrize,
+        isDirectSale: false
       };
     });
 
@@ -187,7 +190,8 @@ export default function ReportsPage() {
         recurring: sale.recurring_value || 0,
         setup: sale.setup_value || 0,
         prizeBase: (sale.recurring_value || 0) + (sale.setup_value || 0),
-        prize: recurringPrize + setupPrize
+        prize: recurringPrize + setupPrize,
+        isDirectSale: true
       };
     });
 
@@ -555,7 +559,37 @@ export default function ReportsPage() {
                     key: 'prize', 
                     header: 'Prêmio',
                     render: (item) => `R$ ${item.prize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                  }
+                  },
+                  ...(isAdmin ? [{
+                    key: 'actions' as const,
+                    header: 'Ações',
+                    render: (item: any) => item.isDirectSale ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir venda?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir a venda de "{item.company}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteDirectSale.mutate(item.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : null
+                  }] : [])
                 ]}
                 data={financialData.salesData}
                 keyExtractor={(item) => item.id}
