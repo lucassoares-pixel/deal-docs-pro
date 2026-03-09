@@ -102,7 +102,7 @@ export default function ReportsPage() {
   const sellerPerformanceData = useMemo(() => {
     return sellers.map(seller => {
       const sellerContracts = filteredContracts.filter(contract => 
-        contract.seller_id === seller.id && contract.signed
+        contract.seller_id === seller.id && contract.sales_status === 'concluido'
       );
       
       const recurringTotal = sellerContracts.reduce((sum, contract) => 
