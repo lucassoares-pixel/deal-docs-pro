@@ -131,7 +131,7 @@ export default function ReportsPage() {
   // Conversion Data
   const conversionData = useMemo(() => {
     const totalProposals = filteredContracts.length;
-    const closedSales = filteredContracts.filter(contract => contract.signed).length;
+    const closedSales = filteredContracts.filter(contract => contract.sales_status === 'concluido').length;
     const conversionRate = totalProposals > 0 ? (closedSales / totalProposals) * 100 : 0;
 
     const sellerConversion = sellers.map(seller => {
