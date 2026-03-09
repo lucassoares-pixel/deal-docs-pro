@@ -522,27 +522,64 @@ export default function ContractBuilderPage() {
           <div className="card-elevated p-6">
             <h2 className="section-title">Selecione o Cliente</h2>
             
-            <div className="max-w-md">
-              <Label className="form-label">Cliente *</Label>
-              <Select value={selectedClientId} onValueChange={(val) => {
-                setSelectedClientId(val);
-                const c = clients.find(cl => cl.id === val);
-                if (c) {
-                  setContractIssuesInvoice((c as any).issues_invoice ?? false);
-                  setContractTaxRegime((c as any).tax_regime || '');
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um cliente..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.trade_name} - {client.cnpj}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4 max-w-md">
+              <div>
+                <Label className="form-label">Cliente *</Label>
+                <Select value={selectedClientId} onValueChange={(val) => {
+                  setSelectedClientId(val);
+                  const c = clients.find(cl => cl.id === val);
+                  if (c) {
+                    setContractIssuesInvoice((c as any).issues_invoice ?? false);
+                    setContractTaxRegime((c as any).tax_regime || '');
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map(client => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.trade_name} - {client.cnpj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="form-label">Vendedor *</Label>
+                <Select
+                  value={sellerProfileId}
+                  onValueChange={setSellerProfileId}
+                  disabled={profile?.role !== 'admin'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um vendedor..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingUsers ? (
+                      <SelectItem value="__loading" disabled>
+                        Carregando...
+                      </SelectItem>
+                    ) : sellerProfiles.length === 0 ? (
+                      <SelectItem value="__empty" disabled>
+                        Nenhum vendedor cadastrado
+                      </SelectItem>
+                    ) : (
+                      sellerProfiles.map((seller) => (
+                        <SelectItem key={seller.id} value={seller.id}>
+                          {seller.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {profile?.role !== 'admin' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O vendedor é definido automaticamente pelo seu usuário.
+                  </p>
+                )}
+              </div>
             </div>
 
             {selectedClient && (
