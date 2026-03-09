@@ -39,6 +39,7 @@ export default function ReportsPage() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
+  const [editingCosts, setEditingCosts] = useState<Record<string, string>>({});
   const { dateRange, preset, setPreset, setDateRange, filterByDate } = useDateRangeFilter('month');
   const { contracts } = useContracts();
   const { users } = useUsers();
