@@ -237,8 +237,8 @@ export default function ReportsPage() {
           trend={{ value: 8.2, isPositive: true }}
         />
         <StatCard
-          title="Comissão Total"
-          value={`R$ ${financialData.totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          title="Premiação Total"
+          value={`R$ ${financialData.totalPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Target}
           trend={{ value: 15.3, isPositive: true }}
         />
