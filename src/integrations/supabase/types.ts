@@ -129,6 +129,7 @@ export type Database = {
           label: string
           max_percentage: number
           min_percentage: number
+          setup_prize_rate: number
           sort_order: number
           updated_at: string
         }
@@ -141,6 +142,7 @@ export type Database = {
           label: string
           max_percentage?: number
           min_percentage?: number
+          setup_prize_rate?: number
           sort_order?: number
           updated_at?: string
         }
@@ -153,6 +155,7 @@ export type Database = {
           label?: string
           max_percentage?: number
           min_percentage?: number
+          setup_prize_rate?: number
           sort_order?: number
           updated_at?: string
         }
