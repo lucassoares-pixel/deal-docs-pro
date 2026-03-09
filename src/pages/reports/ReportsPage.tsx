@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,7 +27,9 @@ import {
   Download, 
   PieChart as PieChartIcon,
   BarChart3,
-  TrendingDown
+  TrendingDown,
+  Percent,
+  Save
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,11 +39,12 @@ export default function ReportsPage() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
+  const [editingCosts, setEditingCosts] = useState<Record<string, string>>({});
   const { dateRange, preset, setPreset, setDateRange, filterByDate } = useDateRangeFilter('month');
   const { contracts } = useContracts();
   const { users } = useUsers();
   const { clients } = useClients();
-  const { directSales } = useDirectSales();
+  const { directSales, updateCost } = useDirectSales();
 
   // Get month/year from dateRange for goals lookup
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
@@ -288,6 +292,75 @@ export default function ReportsPage() {
     };
   }, [filteredContracts, sellers]);
 
+  // Margin Data
+  const marginData = useMemo(() => {
+    const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
+
+    const contractRows = closedContracts.map(contract => {
+      const client = clients?.find(c => c.id === contract.client_id);
+      const revenue = (contract.recurring_total_discounted || 0) + (contract.setup_total || 0);
+      // For contracts, we'd need product cost_price - mark as N/A if not available
+      // This is a simplification; ideally sum cost_price * qty from contract_products
+      return {
+        id: contract.id,
+        date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
+        company: client?.company_name || 'N/A',
+        type: 'Contrato' as const,
+        revenue,
+        cost: null as number | null,
+        margin: null as number | null,
+        marginPct: null as number | null,
+        isDirectSale: false,
+      };
+    });
+
+    const directRows = filteredDirectSales.map(sale => {
+      const revenue = (sale.recurring_value || 0) + (sale.setup_value || 0);
+      const cost = sale.cost_value;
+      const margin = cost != null ? revenue - cost : null;
+      const marginPct = cost != null && revenue > 0 ? ((revenue - cost) / revenue) * 100 : null;
+      return {
+        id: sale.id,
+        date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+        company: sale.company_name,
+        type: 'Sem contrato' as const,
+        revenue,
+        cost,
+        margin,
+        marginPct,
+        isDirectSale: true,
+      };
+    });
+
+    const allRows = [...contractRows, ...directRows].sort((a, b) => {
+      const da = a.date.split('/').reverse().join('-');
+      const db = b.date.split('/').reverse().join('-');
+      return db.localeCompare(da);
+    });
+
+    const totalRevenue = allRows.reduce((s, r) => s + r.revenue, 0);
+    const rowsWithCost = allRows.filter(r => r.cost != null);
+    const totalCost = rowsWithCost.reduce((s, r) => s + (r.cost || 0), 0);
+    const totalMargin = rowsWithCost.reduce((s, r) => s + (r.margin || 0), 0);
+    const avgMarginPct = totalRevenue > 0 && rowsWithCost.length > 0
+      ? (totalMargin / rowsWithCost.reduce((s, r) => s + r.revenue, 0)) * 100 : 0;
+
+    return { allRows, totalRevenue, totalCost, totalMargin, avgMarginPct };
+  }, [filteredContracts, filteredDirectSales, clients]);
+
+  const handleSaveCost = useCallback((saleId: string) => {
+    const val = editingCosts[saleId];
+    if (val === undefined) return;
+    const parsed = parseFloat(val.replace(',', '.'));
+    if (isNaN(parsed)) return;
+    updateCost.mutate({ id: saleId, cost_value: parsed });
+    setEditingCosts(prev => {
+      const next = { ...prev };
+      delete next[saleId];
+      return next;
+    });
+  }, [editingCosts, updateCost]);
+
   const exportToCSV = (data: any[], filename: string) => {
     const csv = [
       Object.keys(data[0]).join(','),
@@ -377,10 +450,11 @@ export default function ReportsPage() {
 
       {/* Reports Tabs */}
       <Tabs defaultValue="financial" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="financial">Financeiro Mensal</TabsTrigger>
-          <TabsTrigger value="goals">Meta por Vendedor</TabsTrigger>
-          <TabsTrigger value="conversion">Conversão Comercial</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="financial">Financeiro</TabsTrigger>
+          <TabsTrigger value="margin">Margem</TabsTrigger>
+          <TabsTrigger value="goals">Metas</TabsTrigger>
+          <TabsTrigger value="conversion">Conversão</TabsTrigger>
         </TabsList>
 
         {/* Financial Report */}
@@ -502,7 +576,139 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
 
-        {/* Goals Report */}
+        {/* Margin Report */}
+        <TabsContent value="margin" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <StatCard
+              title="Receita Total"
+              value={`R$ ${marginData.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={DollarSign}
+            />
+            <StatCard
+              title="Custo Total"
+              value={`R$ ${marginData.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={TrendingDown}
+            />
+            <StatCard
+              title="Margem Total"
+              value={`R$ ${marginData.totalMargin.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icon={TrendingUp}
+            />
+            <StatCard
+              title="Margem Média"
+              value={`${marginData.avgMarginPct.toFixed(1)}%`}
+              icon={Percent}
+            />
+          </div>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Margem por Venda</CardTitle>
+              {marginData.allRows.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => exportToCSV(marginData.allRows.map(r => ({
+                    data: r.date,
+                    empresa: r.company,
+                    tipo: r.type,
+                    receita: r.revenue,
+                    custo: r.cost ?? '',
+                    margem: r.margin ?? '',
+                    margem_pct: r.marginPct != null ? `${r.marginPct.toFixed(1)}%` : ''
+                  })), 'margem-vendas')}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Exportar CSV
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2 font-medium">Data</th>
+                      <th className="text-left py-3 px-2 font-medium">Cliente</th>
+                      <th className="text-left py-3 px-2 font-medium">Tipo</th>
+                      <th className="text-right py-3 px-2 font-medium">Receita</th>
+                      <th className="text-right py-3 px-2 font-medium">Custo</th>
+                      <th className="text-right py-3 px-2 font-medium">Margem</th>
+                      <th className="text-right py-3 px-2 font-medium">Margem %</th>
+                      {isAdmin && <th className="text-center py-3 px-2 font-medium w-10"></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {marginData.allRows.length === 0 && (
+                      <tr>
+                        <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                          Nenhuma venda encontrada no período
+                        </td>
+                      </tr>
+                    )}
+                    {marginData.allRows.map(row => (
+                      <tr key={row.id} className="border-b hover:bg-muted/50">
+                        <td className="py-3 px-2">{row.date}</td>
+                        <td className="py-3 px-2">{row.company}</td>
+                        <td className="py-3 px-2">{row.type}</td>
+                        <td className="py-3 px-2 text-right">
+                          R$ {row.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          {isAdmin && row.isDirectSale ? (
+                            <Input
+                              className="w-28 h-8 text-right ml-auto"
+                              placeholder="0,00"
+                              value={editingCosts[row.id] ?? (row.cost != null ? row.cost.toString().replace('.', ',') : '')}
+                              onChange={(e) => setEditingCosts(prev => ({ ...prev, [row.id]: e.target.value }))}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveCost(row.id)}
+                            />
+                          ) : (
+                            row.cost != null
+                              ? `R$ ${row.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          {row.margin != null
+                            ? <span className={row.margin >= 0 ? 'text-emerald-600' : 'text-destructive'}>
+                                R$ {row.margin.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            : <span className="text-muted-foreground">—</span>
+                          }
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          {row.marginPct != null
+                            ? <span className={row.marginPct >= 0 ? 'text-emerald-600' : 'text-destructive'}>
+                                {row.marginPct.toFixed(1)}%
+                              </span>
+                            : <span className="text-muted-foreground">—</span>
+                          }
+                        </td>
+                        {isAdmin && (
+                          <td className="py-3 px-2 text-center">
+                            {row.isDirectSale && editingCosts[row.id] !== undefined && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => handleSaveCost(row.id)}
+                              >
+                                <Save className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+
         <TabsContent value="goals" className="space-y-6">
           <Card>
             <CardHeader>

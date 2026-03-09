@@ -377,6 +377,7 @@ export type Database = {
       direct_sales: {
         Row: {
           company_name: string
+          cost_value: number | null
           created_at: string
           id: string
           prize_base: number
@@ -389,6 +390,7 @@ export type Database = {
         }
         Insert: {
           company_name: string
+          cost_value?: number | null
           created_at?: string
           id?: string
           prize_base?: number
@@ -401,6 +403,7 @@ export type Database = {
         }
         Update: {
           company_name?: string
+          cost_value?: number | null
           created_at?: string
           id?: string
           prize_base?: number
