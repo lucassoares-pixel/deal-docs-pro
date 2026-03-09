@@ -152,7 +152,13 @@ export default function ReportsPage() {
 
   // Seller Performance Data
   const sellerPerformanceData = useMemo(() => {
-    return sellers.map(seller => {
+    const sortedTiers = tiers?.slice().sort((a, b) => a.min_percentage - b.min_percentage) || [];
+    
+    const displaySellers = !isAdmin && profile?.id 
+      ? sellers.filter(s => s.id === profile.id) 
+      : sellers;
+
+    return displaySellers.map(seller => {
       const sellerContracts = filteredContracts.filter(contract => 
         contract.seller_id === seller.id && contract.sales_status === 'concluido'
       );
@@ -161,12 +167,28 @@ export default function ReportsPage() {
         sum + (contract.recurring_total_discounted || 0), 0
       );
       
-      // Use goal from database, fallback to 0 if not defined
       const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
       const setupTotal = sellerContracts.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
       const prize = recurringTotal * tier.rate + setupTotal * tier.setupRate;
+
+      // Calculate missing R$ to next tier
+      let missingToNextTier = 0;
+      let nextTierLabel = '';
+      if (goal > 0 && sortedTiers.length > 0) {
+        const currentTierIdx = sortedTiers.findIndex(
+          t => achievement >= t.min_percentage && achievement <= t.max_percentage
+        );
+        const nextTier = currentTierIdx >= 0 && currentTierIdx < sortedTiers.length - 1
+          ? sortedTiers[currentTierIdx + 1]
+          : null;
+        if (nextTier) {
+          const neededRecurring = (nextTier.min_percentage / 100) * goal;
+          missingToNextTier = Math.max(0, neededRecurring - recurringTotal);
+          nextTierLabel = nextTier.label;
+        }
+      }
       
       return {
         id: seller.id,
@@ -177,10 +199,12 @@ export default function ReportsPage() {
         tier: tier.label,
         prize,
         setupTotal,
-        salesCount: sellerContracts.length
+        salesCount: sellerContracts.length,
+        missingToNextTier,
+        nextTierLabel
       };
     });
-  }, [sellers, filteredContracts, goalsBySeller]);
+  }, [sellers, filteredContracts, goalsBySeller, tiers, isAdmin, profile]);
 
   // Conversion Data
   const conversionData = useMemo(() => {
