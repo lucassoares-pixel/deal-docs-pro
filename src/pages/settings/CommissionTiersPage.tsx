@@ -97,6 +97,26 @@ export default function CommissionTiersPage() {
     await deleteTier.mutateAsync(id);
   };
 
+  const handleAddBonus = async () => {
+    if (!newBonus.seller_id || !newBonus.description || newBonus.value <= 0) return;
+    await createBonus.mutateAsync({
+      ...newBonus,
+      month: bonusMonth,
+      year: bonusYear,
+    });
+    setNewBonus({ seller_id: '', description: '', value: 0 });
+    setIsAddingBonus(false);
+  };
+
+  const MONTHS = [
+    { value: 1, label: 'Janeiro' }, { value: 2, label: 'Fevereiro' },
+    { value: 3, label: 'Março' }, { value: 4, label: 'Abril' },
+    { value: 5, label: 'Maio' }, { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' }, { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Setembro' }, { value: 10, label: 'Outubro' },
+    { value: 11, label: 'Novembro' }, { value: 12, label: 'Dezembro' },
+  ];
+
   const formatPercent = (value: number) => `${(value * 100).toFixed(0)}%`;
 
   return (
