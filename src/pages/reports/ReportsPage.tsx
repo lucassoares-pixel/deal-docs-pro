@@ -99,7 +99,7 @@ export default function ReportsPage() {
           seller: seller?.name || 'N/A',
           recurring: contract.recurring_total_discounted || 0,
           setup: contract.setup_total || 0,
-          commission
+          prize
         };
       })
     };
