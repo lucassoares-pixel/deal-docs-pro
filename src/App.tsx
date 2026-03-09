@@ -22,6 +22,7 @@ import SelectionFieldsPage from "./pages/settings/SelectionFieldsPage";
 import ReportsPage from "./pages/reports/ReportsPage";
 import GoalsPage from "./pages/goals/GoalsPage";
 import CommissionTiersPage from "./pages/settings/CommissionTiersPage";
+import NewDirectSalePage from "./pages/sales/NewDirectSalePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
