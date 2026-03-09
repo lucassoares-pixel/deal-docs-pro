@@ -120,7 +120,8 @@ export default function ReportsPage() {
       const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
-      const commission = recurringTotal * tier.rate;
+      const setupTotal = sellerContracts.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
+      const prize = recurringTotal * tier.rate + setupTotal * tier.setupRate;
       
       return {
         id: seller.id,
