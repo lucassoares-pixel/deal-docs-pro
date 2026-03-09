@@ -917,6 +917,18 @@ export default function ReportsPage() {
         </TabsContent>
       </Tabs>
       </div>
+
+      {/* Edit Direct Sale Dialog */}
+      <EditDirectSaleDialog
+        sale={editingSale}
+        open={!!editingSale}
+        onOpenChange={(open) => { if (!open) setEditingSale(null); }}
+        sellers={sellers}
+        isPending={updateDirectSale.isPending}
+        onSave={(data) => {
+          updateDirectSale.mutateAsync(data).then(() => setEditingSale(null));
+        }}
+      />
     </AppLayout>
   );
 }
