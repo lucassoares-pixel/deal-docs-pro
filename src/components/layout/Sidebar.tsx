@@ -9,7 +9,8 @@ import {
   LogOut,
   Settings2,
   PieChart,
-  Target
+  Target,
+  Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
