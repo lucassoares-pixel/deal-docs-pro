@@ -10,7 +10,8 @@ import {
   Settings2,
   PieChart,
   Target,
-  Award
+  Award,
+  ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
