@@ -85,11 +85,11 @@ export default function ReportsPage() {
   const filteredDirectSales = useMemo(() => {
     let filtered = directSales || [];
     filtered = filterByDate(filtered, (sale) => sale.created_at);
-    if (selectedSeller !== 'all') {
-      filtered = filtered.filter((sale) => sale.user_id === selectedSeller);
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter((sale) => sale.user_id === effectiveSeller);
     }
     return filtered;
-  }, [directSales, dateRange, selectedSeller, filterByDate]);
+  }, [directSales, dateRange, effectiveSeller, filterByDate]);
 
   // Financial Report Data
   const financialData = useMemo(() => {
