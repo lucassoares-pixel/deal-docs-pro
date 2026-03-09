@@ -65,7 +65,7 @@ export default function ReportsPage() {
 
   // Financial Report Data
   const financialData = useMemo(() => {
-    const closedSales = filteredContracts.filter(contract => contract.signed);
+    const closedSales = filteredContracts.filter(contract => contract.sales_status === 'concluido');
     const totalSales = closedSales.length;
     const totalRecurring = closedSales.reduce((sum, contract) => sum + (contract.recurring_total_discounted || 0), 0);
     const totalSetup = closedSales.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
@@ -102,7 +102,7 @@ export default function ReportsPage() {
   const sellerPerformanceData = useMemo(() => {
     return sellers.map(seller => {
       const sellerContracts = filteredContracts.filter(contract => 
-        contract.seller_id === seller.id && contract.signed
+        contract.seller_id === seller.id && contract.sales_status === 'concluido'
       );
       
       const recurringTotal = sellerContracts.reduce((sum, contract) => 
@@ -131,12 +131,12 @@ export default function ReportsPage() {
   // Conversion Data
   const conversionData = useMemo(() => {
     const totalProposals = filteredContracts.length;
-    const closedSales = filteredContracts.filter(contract => contract.signed).length;
+    const closedSales = filteredContracts.filter(contract => contract.sales_status === 'concluido').length;
     const conversionRate = totalProposals > 0 ? (closedSales / totalProposals) * 100 : 0;
 
     const sellerConversion = sellers.map(seller => {
       const sellerProposals = filteredContracts.filter(contract => contract.seller_id === seller.id);
-      const sellerClosed = sellerProposals.filter(contract => contract.signed);
+      const sellerClosed = sellerProposals.filter(contract => contract.sales_status === 'concluido');
       const sellerRate = sellerProposals.length > 0 ? (sellerClosed.length / sellerProposals.length) * 100 : 0;
       
       return {
