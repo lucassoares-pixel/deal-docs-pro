@@ -17,6 +17,7 @@ import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { useDirectSales } from '@/hooks/useDirectSales';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { differenceInDays, subDays } from 'date-fns';
 import { 
   TrendingUp, 
   Target, 
@@ -81,6 +82,27 @@ export default function ReportsPage() {
     return filtered;
   }, [contracts, dateRange, effectiveSeller, filterByDate]);
 
+  // Calculate previous period range
+  const previousPeriodRange = useMemo(() => {
+    const days = differenceInDays(dateRange.to, dateRange.from) + 1;
+    return {
+      from: subDays(dateRange.from, days),
+      to: subDays(dateRange.from, 1),
+    };
+  }, [dateRange]);
+
+  // Previous period contracts
+  const prevContracts = useMemo(() => {
+    let filtered = (contracts || []).filter(c => {
+      const d = new Date(c.created_at);
+      return d >= previousPeriodRange.from && d <= previousPeriodRange.to;
+    });
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter(c => c.seller_id === effectiveSeller);
+    }
+    return filtered;
+  }, [contracts, previousPeriodRange, effectiveSeller]);
+
   // Filter direct sales by date
   const filteredDirectSales = useMemo(() => {
     let filtered = directSales || [];
@@ -90,6 +112,18 @@ export default function ReportsPage() {
     }
     return filtered;
   }, [directSales, dateRange, effectiveSeller, filterByDate]);
+
+  // Previous period direct sales
+  const prevDirectSales = useMemo(() => {
+    let filtered = (directSales || []).filter(s => {
+      const d = new Date(s.created_at);
+      return d >= previousPeriodRange.from && d <= previousPeriodRange.to;
+    });
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter(s => s.user_id === effectiveSeller);
+    }
+    return filtered;
+  }, [directSales, previousPeriodRange, effectiveSeller]);
 
   // Financial Report Data
   const financialData = useMemo(() => {
@@ -149,6 +183,26 @@ export default function ReportsPage() {
       })
     };
   }, [filteredContracts, filteredDirectSales, clients, sellers]);
+
+  // Previous period KPIs for comparison
+  const prevKpis = useMemo(() => {
+    const closedPrev = prevContracts.filter(c => c.sales_status === 'concluido');
+    const prevRecurring = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0)
+      + prevDirectSales.reduce((s, d) => s + (d.recurring_value || 0), 0);
+    const prevSetup = closedPrev.reduce((s, c) => s + (c.setup_total || 0), 0)
+      + prevDirectSales.reduce((s, d) => s + (d.setup_value || 0), 0);
+    const prevPrize = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0) * 0.6;
+    const prevTotal = prevContracts.length;
+    const prevClosed = closedPrev.length;
+    const prevConversion = prevTotal > 0 ? (prevClosed / prevTotal) * 100 : 0;
+    return { prevRecurring, prevSetup, prevPrize, prevConversion };
+  }, [prevContracts, prevDirectSales]);
+
+  const calcTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : { value: 0, isPositive: true };
+    const change = ((current - previous) / previous) * 100;
+    return { value: Math.abs(parseFloat(change.toFixed(1))), isPositive: change >= 0 };
+  };
 
   // Seller Performance Data
   const sellerPerformanceData = useMemo(() => {
@@ -299,25 +353,25 @@ export default function ReportsPage() {
           title="Receita Recorrente"
           value={`R$ ${financialData.totalRecurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={TrendingUp}
-          trend={{ value: 12.5, isPositive: true }}
+          trend={calcTrend(financialData.totalRecurring, prevKpis.prevRecurring)}
         />
         <StatCard
           title="Implantação"
           value={`R$ ${financialData.totalSetup.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
-          trend={{ value: 8.2, isPositive: true }}
+          trend={calcTrend(financialData.totalSetup, prevKpis.prevSetup)}
         />
         <StatCard
           title="Premiação Total"
           value={`R$ ${financialData.totalPrize.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Target}
-          trend={{ value: 15.3, isPositive: true }}
+          trend={calcTrend(financialData.totalPrize, prevKpis.prevPrize)}
         />
         <StatCard
           title="Conversão"
           value={`${conversionData.conversionRate.toFixed(1)}%`}
           icon={TrendingUp}
-          trend={{ value: conversionData.conversionRate > 25 ? 5.2 : -2.1, isPositive: conversionData.conversionRate > 25 }}
+          trend={calcTrend(conversionData.conversionRate, prevKpis.prevConversion)}
         />
       </div>
 
