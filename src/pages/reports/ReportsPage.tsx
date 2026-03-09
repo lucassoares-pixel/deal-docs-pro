@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { useContracts } from '@/hooks/useContracts';
 import { useUsers } from '@/hooks/useUsers';
 import { useClients } from '@/hooks/useClients';
+import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { 
   TrendingUp, 
@@ -43,6 +44,20 @@ export default function ReportsPage() {
   const { contracts } = useContracts();
   const { users } = useUsers();
   const { clients } = useClients();
+
+  // Get month/year from dateRange for goals lookup
+  const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
+  const selectedYear = dateRange.from ? dateRange.from.getFullYear() : new Date().getFullYear();
+  const { goals } = useSellerGoals(selectedMonth, selectedYear);
+
+  // Map goals by seller_id
+  const goalsBySeller = useMemo(() => {
+    const result: Record<string, number> = {};
+    goals?.forEach((goal) => {
+      result[goal.seller_id] = goal.goal_value;
+    });
+    return result;
+  }, [goals]);
 
   const sellers = useMemo(
     () => users?.filter((user) => user.role === 'sales' && user.active) || [],
@@ -109,8 +124,8 @@ export default function ReportsPage() {
         sum + (contract.recurring_total_discounted || 0), 0
       );
       
-      // Using a base goal of R$ 10,000 per seller (this could come from database)
-      const goal = 10000;
+      // Use goal from database, fallback to 0 if not defined
+      const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
       const commission = recurringTotal * tier.rate;
@@ -126,7 +141,7 @@ export default function ReportsPage() {
         salesCount: sellerContracts.length
       };
     });
-  }, [sellers, filteredContracts]);
+  }, [sellers, filteredContracts, goalsBySeller]);
 
   // Conversion Data
   const conversionData = useMemo(() => {
