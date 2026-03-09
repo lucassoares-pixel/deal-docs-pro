@@ -77,8 +77,8 @@ export default function ReportsPage() {
     const totalRecurring = closedSales.reduce((sum, contract) => sum + (contract.recurring_total_discounted || 0), 0);
     const totalSetup = closedSales.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
     
-    // Calculate commission (using 60% as base rate for now)
-    const totalCommission = totalRecurring * 0.6;
+    // Calculate prize (using 60% as base rate for now)
+    const totalPrize = totalRecurring * 0.6;
     const averageTicket = totalSales > 0 ? totalRecurring / totalSales : 0;
 
     return {
