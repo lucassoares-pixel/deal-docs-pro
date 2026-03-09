@@ -11,6 +11,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useContracts } from '@/hooks/useContracts';
 import { useUsers } from '@/hooks/useUsers';
+import { useAuth } from '@/context/AuthContext';
 import { useClients } from '@/hooks/useClients';
 import { useSellerGoals } from '@/hooks/useSellerGoals';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
@@ -31,6 +32,8 @@ import { ptBR } from 'date-fns/locale';
 
 
 export default function ReportsPage() {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
   const { dateRange, preset, setPreset, setDateRange, filterByDate } = useDateRangeFilter('month');
   const { contracts } = useContracts();
@@ -42,7 +45,13 @@ export default function ReportsPage() {
   const selectedMonth = dateRange.from ? dateRange.from.getMonth() + 1 : new Date().getMonth() + 1;
   const selectedYear = dateRange.from ? dateRange.from.getFullYear() : new Date().getFullYear();
   const { goals } = useSellerGoals(selectedMonth, selectedYear);
-  const { getCommissionTier } = useCommissionTiers();
+  const { getCommissionTier, tiers } = useCommissionTiers();
+
+  // For sellers, auto-filter to their own profile
+  const effectiveSeller = useMemo(() => {
+    if (!isAdmin && profile?.id) return profile.id;
+    return selectedSeller;
+  }, [isAdmin, profile, selectedSeller]);
 
   // Map goals by seller_id
   const goalsBySeller = useMemo(() => {
@@ -65,22 +74,22 @@ export default function ReportsPage() {
     filtered = filterByDate(filtered, (contract) => contract.created_at);
 
     // Filter by seller if selected (by profile id)
-    if (selectedSeller !== 'all') {
-      filtered = filtered.filter((contract) => contract.seller_id === selectedSeller);
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter((contract) => contract.seller_id === effectiveSeller);
     }
 
     return filtered;
-  }, [contracts, dateRange, selectedSeller, filterByDate]);
+  }, [contracts, dateRange, effectiveSeller, filterByDate]);
 
   // Filter direct sales by date
   const filteredDirectSales = useMemo(() => {
     let filtered = directSales || [];
     filtered = filterByDate(filtered, (sale) => sale.created_at);
-    if (selectedSeller !== 'all') {
-      filtered = filtered.filter((sale) => sale.user_id === selectedSeller);
+    if (effectiveSeller !== 'all') {
+      filtered = filtered.filter((sale) => sale.user_id === effectiveSeller);
     }
     return filtered;
-  }, [directSales, dateRange, selectedSeller, filterByDate]);
+  }, [directSales, dateRange, effectiveSeller, filterByDate]);
 
   // Financial Report Data
   const financialData = useMemo(() => {
@@ -143,7 +152,13 @@ export default function ReportsPage() {
 
   // Seller Performance Data
   const sellerPerformanceData = useMemo(() => {
-    return sellers.map(seller => {
+    const sortedTiers = tiers?.slice().sort((a, b) => a.min_percentage - b.min_percentage) || [];
+    
+    const displaySellers = !isAdmin && profile?.id 
+      ? sellers.filter(s => s.id === profile.id) 
+      : sellers;
+
+    return displaySellers.map(seller => {
       const sellerContracts = filteredContracts.filter(contract => 
         contract.seller_id === seller.id && contract.sales_status === 'concluido'
       );
@@ -152,12 +167,28 @@ export default function ReportsPage() {
         sum + (contract.recurring_total_discounted || 0), 0
       );
       
-      // Use goal from database, fallback to 0 if not defined
       const goal = goalsBySeller[seller.id] || 0;
       const achievement = goal > 0 ? (recurringTotal / goal) * 100 : 0;
       const tier = getCommissionTier(achievement);
       const setupTotal = sellerContracts.reduce((sum, contract) => sum + (contract.setup_total || 0), 0);
       const prize = recurringTotal * tier.rate + setupTotal * tier.setupRate;
+
+      // Calculate missing R$ to next tier
+      let missingToNextTier = 0;
+      let nextTierLabel = '';
+      if (goal > 0 && sortedTiers.length > 0) {
+        const currentTierIdx = sortedTiers.findIndex(
+          t => achievement >= t.min_percentage && achievement <= t.max_percentage
+        );
+        const nextTier = currentTierIdx >= 0 && currentTierIdx < sortedTiers.length - 1
+          ? sortedTiers[currentTierIdx + 1]
+          : null;
+        if (nextTier) {
+          const neededRecurring = (nextTier.min_percentage / 100) * goal;
+          missingToNextTier = Math.max(0, neededRecurring - recurringTotal);
+          nextTierLabel = nextTier.label;
+        }
+      }
       
       return {
         id: seller.id,
@@ -168,10 +199,12 @@ export default function ReportsPage() {
         tier: tier.label,
         prize,
         setupTotal,
-        salesCount: sellerContracts.length
+        salesCount: sellerContracts.length,
+        missingToNextTier,
+        nextTierLabel
       };
     });
-  }, [sellers, filteredContracts, goalsBySeller]);
+  }, [sellers, filteredContracts, goalsBySeller, tiers, isAdmin, profile]);
 
   // Conversion Data
   const conversionData = useMemo(() => {
@@ -220,8 +253,8 @@ export default function ReportsPage() {
     <AppLayout>
       <div className="space-y-8">
         <PageHeader
-          title="Relatórios"
-          subtitle="Análise detalhada de performance e vendas"
+          title={isAdmin ? "Relatórios" : "Meus Resultados"}
+          subtitle={isAdmin ? "Análise detalhada de performance e vendas" : "Acompanhe seus números e performance"}
         />
 
       {/* Filters */}
@@ -238,22 +271,24 @@ export default function ReportsPage() {
               />
             </div>
             
-            <div className="min-w-[200px]">
-              <label className="block text-sm font-medium mb-2">Vendedor</label>
-              <Select value={selectedSeller} onValueChange={setSelectedSeller}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um vendedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os vendedores</SelectItem>
-                    {sellers.map(seller => (
-                      <SelectItem key={seller.id} value={seller.id}>
-                        {seller.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isAdmin && (
+              <div className="min-w-[200px]">
+                <label className="block text-sm font-medium mb-2">Vendedor</label>
+                <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os vendedores</SelectItem>
+                      {sellers.map(seller => (
+                        <SelectItem key={seller.id} value={seller.id}>
+                          {seller.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -444,6 +479,16 @@ export default function ReportsPage() {
                         <span>Vendido: R$ {seller.recurringTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                       <Progress value={Math.min(seller.achievement, 100)} className="h-2" />
+                      {seller.missingToNextTier > 0 && (
+                        <p className="text-xs font-medium text-amber-600">
+                          Falta R$ {seller.missingToNextTier.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} para a faixa {seller.nextTierLabel}
+                        </p>
+                      )}
+                      {seller.missingToNextTier === 0 && seller.achievement >= 100 && (
+                        <p className="text-xs font-medium text-emerald-600">
+                          🏆 Faixa máxima atingida!
+                        </p>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4 text-sm">
