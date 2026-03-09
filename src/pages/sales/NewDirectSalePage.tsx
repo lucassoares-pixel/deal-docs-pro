@@ -48,13 +48,14 @@ export default function NewDirectSalePage() {
   const prize = prizeBase * 0.10;
 
   const handleSubmit = async () => {
-    if (!companyName.trim()) return;
+    if (!companyName.trim() || !sellerId) return;
 
     await createDirectSale.mutateAsync({
       company_name: companyName.trim(),
       sale_date: format(saleDate, 'yyyy-MM-dd'),
       recurring_value: recurring,
       setup_value: setup,
+      seller_id: sellerId,
     });
 
     // Clear form
@@ -62,6 +63,7 @@ export default function NewDirectSalePage() {
     setSaleDate(new Date());
     setRecurringValue('');
     setSetupValue('');
+    setSellerId(profile?.id || '');
   };
 
   return (
