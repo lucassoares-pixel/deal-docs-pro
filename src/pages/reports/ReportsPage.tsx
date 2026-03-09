@@ -748,6 +748,7 @@ export default function ReportsPage() {
                       <tr key={row.id} className="border-b hover:bg-muted/50">
                         <td className="py-3 px-2">{row.date}</td>
                         <td className="py-3 px-2">{row.company}</td>
+                        <td className="py-3 px-2">{row.seller}</td>
                         <td className="py-3 px-2">{row.type}</td>
                         <td className="py-3 px-2 text-right">
                           R$ {row.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
