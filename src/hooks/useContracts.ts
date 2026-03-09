@@ -308,15 +308,14 @@ export function useContracts() {
       return;
     }
 
-    // Se o status for concluído, gerar comissão
+    // Se o status for concluído, gerar premiação
     if (sales_status === 'concluido') {
       const recurring_value = contract.recurring_total_discounted || 0;
       const setup_value = contract.setup_total || 0;
       
-      // Lógica de comissão simplificada - adaptar conforme necessidade real
+      // Lógica de premiação simplificada - adaptar conforme necessidade real
       let commission_percentage = 0;
       if (recurring_value > 0) {
-          // Valores fictícios para exemplo. Ideal seria buscar a meta do usuário
           commission_percentage = 50; 
       }
       
@@ -340,24 +339,24 @@ export function useContracts() {
         });
 
         if (commissionError) {
-          console.error('Erro ao gerar comissão:', commissionError);
+          console.error('Erro ao gerar premiação:', commissionError);
           toast({
-            title: 'Erro ao gerar comissão',
+            title: 'Erro ao gerar premiação',
             description: commissionError.message,
             variant: 'destructive',
           });
         }
     } else {
-      // Se voltou para pendente, remover a comissão gerada
+      // Se voltou para pendente, remover a premiação gerada
       const { error: deleteError } = await supabase
         .from('sales_commissions')
         .delete()
         .eq('contract_id', id);
 
       if (deleteError) {
-        console.error('Erro ao remover comissão:', deleteError);
+        console.error('Erro ao remover premiação:', deleteError);
         toast({
-          title: 'Erro ao remover comissão',
+          title: 'Erro ao remover premiação',
           description: deleteError.message,
           variant: 'destructive',
         });
@@ -367,7 +366,7 @@ export function useContracts() {
     await fetchContracts();
     toast({
       title: sales_status === 'concluido' ? 'Venda Concluída' : 'Status alterado para pendente',
-      description: sales_status === 'concluido' ? 'Comissão gerada com sucesso.' : 'Comissão removida.',
+      description: sales_status === 'concluido' ? 'Premiação gerada com sucesso.' : 'Premiação removida.',
     });
   };
 
