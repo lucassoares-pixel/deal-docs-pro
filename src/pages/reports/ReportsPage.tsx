@@ -271,22 +271,24 @@ export default function ReportsPage() {
               />
             </div>
             
-            <div className="min-w-[200px]">
-              <label className="block text-sm font-medium mb-2">Vendedor</label>
-              <Select value={selectedSeller} onValueChange={setSelectedSeller}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um vendedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os vendedores</SelectItem>
-                    {sellers.map(seller => (
-                      <SelectItem key={seller.id} value={seller.id}>
-                        {seller.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isAdmin && (
+              <div className="min-w-[200px]">
+                <label className="block text-sm font-medium mb-2">Vendedor</label>
+                <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os vendedores</SelectItem>
+                      {sellers.map(seller => (
+                        <SelectItem key={seller.id} value={seller.id}>
+                          {seller.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
