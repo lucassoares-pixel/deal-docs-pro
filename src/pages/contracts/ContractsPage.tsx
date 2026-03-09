@@ -187,18 +187,27 @@ export default function ContractsPage() {
     {
       key: 'sales_status',
       header: 'Status da Venda',
-      render: (contract: ContractWithDetails) => (
-        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-          <select
-            value={(contract as any).sales_status || 'pendente'}
-            onChange={(e) => toggleSalesStatus(contract.id, e.target.value as 'pendente' | 'concluido')}
-            className="text-sm border rounded p-1"
-          >
-            <option value="pendente">Pendente</option>
-            <option value="concluido">Concluído</option>
-          </select>
-        </div>
-      ),
+      render: (contract: ContractWithDetails) => {
+        const salesStatus = (contract as any).sales_status || 'pendente';
+        return (
+          <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+            {salesStatus === 'concluido' ? (
+              <span className="badge-success">
+                ✓ Concluído
+              </span>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7 px-2"
+                onClick={() => toggleSalesStatus(contract.id, 'concluido')}
+              >
+                Marcar como concluído
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'status',
