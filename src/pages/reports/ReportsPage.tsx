@@ -329,7 +329,7 @@ export default function ReportsPage() {
     });
 
     const directRows = filteredDirectSales.map(sale => {
-      const revenue = (sale.recurring_value || 0) + (sale.setup_value || 0);
+      const revenue = sale.recurring_value || 0;
       const cost = sale.cost_value;
       const margin = cost != null ? revenue - cost : null;
       const marginPct = cost != null && revenue > 0 ? ((revenue - cost) / revenue) * 100 : null;
