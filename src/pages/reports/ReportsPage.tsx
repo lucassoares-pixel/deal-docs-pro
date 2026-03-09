@@ -336,23 +336,38 @@ export default function ReportsPage() {
 
     const contractRows = closedContracts.map(contract => {
       const client = clients?.find(c => c.id === contract.client_id);
+      const seller = sellers.find(s => s.id === contract.seller_id);
       const revenue = contract.recurring_total_discounted || 0;
-      // For contracts, we'd need product cost_price - mark as N/A if not available
-      // This is a simplification; ideally sum cost_price * qty from contract_products
+      
+      // Calculate contract cost from product cost_prices
+      const contractCost = contract.products?.reduce((sum, cp) => {
+        const productCost = cp.product?.cost_price || 0;
+        return sum + (productCost * (cp.quantity || 1));
+      }, 0) ?? null;
+      
+      const hasCost = contractCost != null && contractCost > 0;
+      const margin = hasCost ? revenue - contractCost : null;
+      const marginPct = hasCost && revenue > 0 ? ((revenue - contractCost) / revenue) * 100 : null;
+
+      // Use sales_status date or start_date as closing date
+      const closingDate = contract.updated_at || contract.start_date;
+
       return {
         id: contract.id,
-        date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
+        date: format(new Date(closingDate), 'dd/MM/yyyy'),
         company: client?.company_name || 'N/A',
+        seller: seller?.name || 'N/A',
         type: 'Contrato' as const,
         revenue,
-        cost: null as number | null,
-        margin: null as number | null,
-        marginPct: null as number | null,
+        cost: hasCost ? contractCost : null,
+        margin,
+        marginPct,
         isDirectSale: false,
       };
     });
 
     const directRows = filteredDirectSales.map(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
       const revenue = sale.recurring_value || 0;
       const cost = sale.cost_value;
       const margin = cost != null ? revenue - cost : null;
@@ -361,6 +376,7 @@ export default function ReportsPage() {
         id: sale.id,
         date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
         company: sale.company_name,
+        seller: seller?.name || 'N/A',
         type: 'Sem contrato' as const,
         revenue,
         cost,
@@ -384,7 +400,7 @@ export default function ReportsPage() {
       ? (totalMargin / rowsWithCost.reduce((s, r) => s + r.revenue, 0)) * 100 : 0;
 
     return { allRows, totalRevenue, totalCost, totalMargin, avgMarginPct };
-  }, [filteredContracts, filteredDirectSales, clients]);
+  }, [filteredContracts, filteredDirectSales, clients, sellers]);
 
   const handleSaveCost = useCallback((saleId: string) => {
     const val = editingCosts[saleId];
@@ -688,9 +704,10 @@ export default function ReportsPage() {
               {marginData.allRows.length > 0 && (
                 <Button 
                   variant="outline" 
-                  onClick={() => exportToCSV(marginData.allRows.map(r => ({
+                   onClick={() => exportToCSV(marginData.allRows.map(r => ({
                     data: r.date,
                     empresa: r.company,
+                    vendedor: r.seller,
                     tipo: r.type,
                     receita: r.revenue,
                     custo: r.cost ?? '',
@@ -707,10 +724,11 @@ export default function ReportsPage() {
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead>
+                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-2 font-medium">Data</th>
                       <th className="text-left py-3 px-2 font-medium">Cliente</th>
+                      <th className="text-left py-3 px-2 font-medium">Vendedor</th>
                       <th className="text-left py-3 px-2 font-medium">Tipo</th>
                       <th className="text-right py-3 px-2 font-medium">Receita</th>
                       <th className="text-right py-3 px-2 font-medium">Custo</th>
@@ -722,7 +740,7 @@ export default function ReportsPage() {
                   <tbody>
                     {marginData.allRows.length === 0 && (
                       <tr>
-                        <td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                        <td colSpan={isAdmin ? 9 : 8} className="text-center py-8 text-muted-foreground">
                           Nenhuma venda encontrada no período
                         </td>
                       </tr>
@@ -731,6 +749,7 @@ export default function ReportsPage() {
                       <tr key={row.id} className="border-b hover:bg-muted/50">
                         <td className="py-3 px-2">{row.date}</td>
                         <td className="py-3 px-2">{row.company}</td>
+                        <td className="py-3 px-2">{row.seller}</td>
                         <td className="py-3 px-2">{row.type}</td>
                         <td className="py-3 px-2 text-right">
                           R$ {row.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
