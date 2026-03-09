@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useCommissionTiers, CommissionTier } from '@/hooks/useCommissionTiers';
-import { Save, Trash2, Plus, Percent, Award } from 'lucide-react';
+import { useBonusPrizes } from '@/hooks/useBonusPrizes';
+import { useUsers } from '@/hooks/useUsers';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save, Trash2, Plus, Percent, Award, Gift } from 'lucide-react';
 import {
   Table,
   TableBody,
