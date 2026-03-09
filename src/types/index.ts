@@ -96,6 +96,8 @@ export interface Contract {
   training_contact_phone?: string | null;
   implementation_type?: string | null;
   certificate_type?: string | null;
+  implementation_payment_date?: string | null;
+  first_monthly_payment_date?: string | null;
   signed: boolean;
   sales_status: 'pendente' | 'concluido';
   status: ContractStatus;
