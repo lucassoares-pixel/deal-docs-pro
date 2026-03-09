@@ -44,8 +44,7 @@ export default function NewDirectSalePage() {
 
   const recurring = parseCurrency(recurringValue);
   const setup = parseCurrency(setupValue);
-  const prizeBase = recurring + setup;
-  const prize = prizeBase * 0.10;
+  const setupPrize = setup * 0.10;
 
   const handleSubmit = async () => {
     if (!companyName.trim() || !sellerId) return;
