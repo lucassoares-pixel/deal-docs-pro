@@ -197,6 +197,7 @@ export type Database = {
           recurring_total_discounted: number
           recurring_total_full: number
           sales_status: string | null
+          seller_id: string
           setup_total: number
           signed: boolean
           start_date: string
@@ -223,6 +224,7 @@ export type Database = {
           recurring_total_discounted?: number
           recurring_total_full?: number
           sales_status?: string | null
+          seller_id: string
           setup_total?: number
           signed?: boolean
           start_date: string
@@ -249,6 +251,7 @@ export type Database = {
           recurring_total_discounted?: number
           recurring_total_full?: number
           sales_status?: string | null
+          seller_id?: string
           setup_total?: number
           signed?: boolean
           start_date?: string
@@ -271,6 +274,13 @@ export type Database = {
             columns: ["legal_representative_id"]
             isOneToOne: false
             referencedRelation: "legal_representatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

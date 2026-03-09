@@ -44,22 +44,22 @@ export default function ReportsPage() {
   const { users } = useUsers();
   const { clients } = useClients();
 
-  const sellers = useMemo(() => 
-    users?.filter(user => user.role === 'sales') || [],
-    [users]
+  const sellers = useMemo(
+    () => users?.filter((user) => user.role === 'sales' && user.active) || [],
+    [users],
   );
 
   const filteredContracts = useMemo(() => {
     let filtered = contracts || [];
-    
+
     // Filter by date range
     filtered = filterByDate(filtered, (contract) => contract.created_at);
-    
-    // Filter by seller if selected
+
+    // Filter by seller if selected (by profile id)
     if (selectedSeller !== 'all') {
-      filtered = filtered.filter(contract => contract.user_id === selectedSeller);
+      filtered = filtered.filter((contract) => contract.seller_id === selectedSeller);
     }
-    
+
     return filtered;
   }, [contracts, dateRange, selectedSeller, filterByDate]);
 
@@ -82,7 +82,7 @@ export default function ReportsPage() {
       averageTicket,
       salesData: closedSales.map(contract => {
         const client = clients?.find(c => c.id === contract.client_id);
-        const seller = sellers.find(s => s.user_id === contract.user_id);
+        const seller = sellers.find(s => s.id === contract.seller_id);
         const commission = (contract.recurring_total_discounted || 0) * 0.6;
         
         return {
@@ -102,7 +102,7 @@ export default function ReportsPage() {
   const sellerPerformanceData = useMemo(() => {
     return sellers.map(seller => {
       const sellerContracts = filteredContracts.filter(contract => 
-        contract.user_id === seller.user_id && contract.signed
+        contract.seller_id === seller.id && contract.signed
       );
       
       const recurringTotal = sellerContracts.reduce((sum, contract) => 
@@ -135,7 +135,7 @@ export default function ReportsPage() {
     const conversionRate = totalProposals > 0 ? (closedSales / totalProposals) * 100 : 0;
 
     const sellerConversion = sellers.map(seller => {
-      const sellerProposals = filteredContracts.filter(contract => contract.user_id === seller.user_id);
+      const sellerProposals = filteredContracts.filter(contract => contract.seller_id === seller.id);
       const sellerClosed = sellerProposals.filter(contract => contract.signed);
       const sellerRate = sellerProposals.length > 0 ? (sellerClosed.length / sellerProposals.length) * 100 : 0;
       
@@ -201,9 +201,9 @@ export default function ReportsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os vendedores</SelectItem>
-                  {sellers.map(seller => (
-                    <SelectItem key={seller.id} value={seller.user_id}>
-                      {seller.name}
+                    {sellers.map(seller => (
+                      <SelectItem key={seller.id} value={seller.id}>
+                        {seller.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

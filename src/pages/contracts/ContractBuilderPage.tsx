@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -9,16 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useClients } from '@/hooks/useClients';
 import { useProducts } from '@/hooks/useProducts';
 import { useContracts } from '@/hooks/useContracts';
+import { useUsers } from '@/hooks/useUsers';
 import { useAuth } from '@/context/AuthContext';
 import { Tables } from '@/integrations/supabase/types';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Check, 
-  Package, 
-  Users, 
-  FileText, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Package,
+  Users,
+  FileText,
   Plus,
   Minus,
   Percent,
@@ -55,7 +56,29 @@ export default function ContractBuilderPage() {
   const { clients, legalRepresentatives, loading: loadingClients, updateClient } = useClients();
   const { activeProducts, loading: loadingProducts } = useProducts();
   const { addContract } = useContracts();
+  const { users, loading: loadingUsers } = useUsers();
   const { profile } = useAuth();
+
+  const sellerProfiles = useMemo(
+    () => (users || []).filter((u) => u.active && u.role === 'sales'),
+    [users],
+  );
+
+  const [sellerProfileId, setSellerProfileId] = useState<string>('');
+
+  useEffect(() => {
+    if (sellerProfileId) return;
+
+    // Default seller:
+    // - Admin: first available seller
+    // - Seller: self
+    if (profile?.role === 'admin') {
+      if (sellerProfiles.length > 0) setSellerProfileId(sellerProfiles[0].id);
+      return;
+    }
+
+    if (profile?.id) setSellerProfileId(profile.id);
+  }, [profile?.id, profile?.role, sellerProfiles, sellerProfileId]);
 
   const [step, setStep] = useState<Step>('client');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
@@ -316,6 +339,10 @@ export default function ContractBuilderPage() {
         toast.error('Selecione um cliente');
         return false;
       }
+      if (!sellerProfileId) {
+        toast.error('Selecione um vendedor');
+        return false;
+      }
     } else if (step === 'products') {
       if (selectedProducts.length === 0) {
         toast.error('Selecione pelo menos um produto');
@@ -392,6 +419,7 @@ export default function ContractBuilderPage() {
         {
           client_id: selectedClient.id,
           legal_representative_id: legalRep.id,
+          seller_id: sellerProfileId,
           recurring_total_full: calculations.recurringFull,
           recurring_total_discounted: calculations.recurringWithExtraDiscount,
           setup_total: calculations.implementationTotal,
@@ -495,27 +523,64 @@ export default function ContractBuilderPage() {
           <div className="card-elevated p-6">
             <h2 className="section-title">Selecione o Cliente</h2>
             
-            <div className="max-w-md">
-              <Label className="form-label">Cliente *</Label>
-              <Select value={selectedClientId} onValueChange={(val) => {
-                setSelectedClientId(val);
-                const c = clients.find(cl => cl.id === val);
-                if (c) {
-                  setContractIssuesInvoice((c as any).issues_invoice ?? false);
-                  setContractTaxRegime((c as any).tax_regime || '');
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um cliente..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.trade_name} - {client.cnpj}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4 max-w-md">
+              <div>
+                <Label className="form-label">Cliente *</Label>
+                <Select value={selectedClientId} onValueChange={(val) => {
+                  setSelectedClientId(val);
+                  const c = clients.find(cl => cl.id === val);
+                  if (c) {
+                    setContractIssuesInvoice((c as any).issues_invoice ?? false);
+                    setContractTaxRegime((c as any).tax_regime || '');
+                  }
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map(client => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.trade_name} - {client.cnpj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="form-label">Vendedor *</Label>
+                <Select
+                  value={sellerProfileId}
+                  onValueChange={setSellerProfileId}
+                  disabled={profile?.role !== 'admin'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um vendedor..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingUsers ? (
+                      <SelectItem value="__loading" disabled>
+                        Carregando...
+                      </SelectItem>
+                    ) : sellerProfiles.length === 0 ? (
+                      <SelectItem value="__empty" disabled>
+                        Nenhum vendedor cadastrado
+                      </SelectItem>
+                    ) : (
+                      sellerProfiles.map((seller) => (
+                        <SelectItem key={seller.id} value={seller.id}>
+                          {seller.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {profile?.role !== 'admin' && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O vendedor é definido automaticamente pelo seu usuário.
+                  </p>
+                )}
+              </div>
             </div>
 
             {selectedClient && (
