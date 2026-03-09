@@ -68,6 +68,8 @@ export default function EditContractPage() {
       setExtraDiscountPeriodType((contract.extra_discount_period_type as DiscountPeriodType) || 'indeterminate');
       setExtraDiscountMonths(String(contract.extra_discount_months || ''));
       setExtraDiscountEndDate(contract.extra_discount_end_date || '');
+      setImplementationDueDate(contract.implementation_payment_date || '');
+      setFirstMonthlyPaymentDate(contract.first_monthly_payment_date || '');
 
       const products: SelectedProduct[] = (contract.products || []).map(cp => {
         const prod = activeProducts.find(p => p.id === cp.product_id) || cp.product;
