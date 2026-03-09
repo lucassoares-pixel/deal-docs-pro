@@ -31,6 +31,20 @@ import {
 
 export default function CommissionTiersPage() {
   const { tiers, isLoading, updateTier, createTier, deleteTier } = useCommissionTiers();
+  const { users } = useUsers();
+  const sellers = useMemo(
+    () => users?.filter((u) => u.role === 'sales' && u.active) || [],
+    [users]
+  );
+
+  const currentDate = new Date();
+  const [bonusMonth, setBonusMonth] = useState(currentDate.getMonth() + 1);
+  const [bonusYear, setBonusYear] = useState(currentDate.getFullYear());
+  const { bonuses, isLoading: bonusLoading, createBonus, deleteBonus } = useBonusPrizes(bonusMonth, bonusYear);
+
+  const [isAddingBonus, setIsAddingBonus] = useState(false);
+  const [newBonus, setNewBonus] = useState({ seller_id: '', description: '', value: 0 });
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedValues, setEditedValues] = useState<Partial<CommissionTier>>({});
   const [isCreating, setIsCreating] = useState(false);
