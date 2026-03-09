@@ -216,13 +216,14 @@ export default function ReportsPage() {
       + prevDirectSales.reduce((s, d) => s + (d.recurring_value || 0), 0);
     const prevSetup = closedPrev.reduce((s, c) => s + (c.setup_total || 0), 0)
       + prevDirectSales.reduce((s, d) => s + (d.setup_value || 0), 0);
-    const prevContractRecurring = closedPrev.reduce((s, c) => s + (c.recurring_total_discounted || 0), 0);
-    const prevPrize = prevContractRecurring * 0.6 + prevSetup * 0.10;
+    // Use a default mid-tier rate for previous period comparison
+    const defaultTier = getCommissionTier(70);
+    const prevPrize = prevRecurring * defaultTier.rate + prevSetup * 0.10;
     const prevTotal = prevContracts.length;
     const prevClosed = closedPrev.length;
     const prevConversion = prevTotal > 0 ? (prevClosed / prevTotal) * 100 : 0;
     return { prevRecurring, prevSetup, prevPrize, prevConversion };
-  }, [prevContracts, prevDirectSales]);
+  }, [prevContracts, prevDirectSales, getCommissionTier]);
 
   const calcTrend = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : { value: 0, isPositive: true };
