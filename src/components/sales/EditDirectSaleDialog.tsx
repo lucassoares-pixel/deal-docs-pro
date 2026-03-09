@@ -170,4 +170,6 @@ const EditDirectSaleDialog = ({ sale, open, onOpenChange, onSave, sellers, isPen
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export { EditDirectSaleDialog };
