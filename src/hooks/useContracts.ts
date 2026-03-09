@@ -351,7 +351,7 @@ export function useContracts() {
     updateContract,
     updateContractStatus,
     deleteContract,
-    toggleSigned,
+    toggleSalesStatus,
     getContractById,
     getContractsByClientId,
     refetch: fetchContracts,
