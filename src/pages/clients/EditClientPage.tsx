@@ -32,6 +32,7 @@ export default function EditClientPage() {
     address_city: '',
     address_state: '',
     address_zip: '',
+    address_complement: '',
     issues_invoice: false,
     tax_regime: '',
   });
