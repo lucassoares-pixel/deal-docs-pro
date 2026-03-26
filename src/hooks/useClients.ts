@@ -115,7 +115,7 @@ export function useClients() {
     return data;
   };
 
-
+  const updateClient = async (id: string, updates: Partial<Client>) => {
     const { data, error } = await supabase
       .from('clients')
       .update(updates)
