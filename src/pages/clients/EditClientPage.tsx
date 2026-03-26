@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 export default function EditClientPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { clients, legalRepresentatives, loading: clientsLoading, updateClient, getClientById, getLegalRepByClientId } = useClients();
+  const { clients, legalRepresentatives, loading: clientsLoading, updateClient, updateLegalRepresentative, getClientById, getLegalRepByClientId } = useClients();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
