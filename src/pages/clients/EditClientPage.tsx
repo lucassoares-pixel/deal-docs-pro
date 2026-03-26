@@ -106,6 +106,7 @@ export default function EditClientPage() {
         address_city: formData.address_city,
         address_state: formData.address_state,
         address_zip: formData.address_zip,
+        address_complement: formData.address_complement || '',
         company_type: formData.company_type,
         issues_invoice: formData.issues_invoice,
         tax_regime: formData.tax_regime || null,
