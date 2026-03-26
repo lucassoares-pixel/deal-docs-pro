@@ -97,6 +97,7 @@ export type Database = {
       clients: {
         Row: {
           address_city: string
+          address_complement: string | null
           address_neighborhood: string
           address_number: string
           address_state: string
@@ -118,6 +119,7 @@ export type Database = {
         }
         Insert: {
           address_city: string
+          address_complement?: string | null
           address_neighborhood: string
           address_number: string
           address_state: string
@@ -139,6 +141,7 @@ export type Database = {
         }
         Update: {
           address_city?: string
+          address_complement?: string | null
           address_neighborhood?: string
           address_number?: string
           address_state?: string
