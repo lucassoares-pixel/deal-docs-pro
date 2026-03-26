@@ -399,6 +399,67 @@ export default function EditClientPage() {
           </div>
         </div>
 
+        {/* Legal Representative */}
+        <div className="card-elevated p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <User className="w-5 h-5 text-accent" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Representante Legal</h2>
+              <p className="text-sm text-muted-foreground">Pessoa responsável pela assinatura do contrato</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="form-label">Nome Completo *</Label>
+              <Input
+                value={formData.legal_name}
+                onChange={handleChange('legal_name')}
+                placeholder="Nome do representante"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">CPF *</Label>
+              <Input
+                value={formData.legal_cpf}
+                onChange={handleChange('legal_cpf')}
+                placeholder="000.000.000-00"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">Cargo *</Label>
+              <Input
+                value={formData.legal_role}
+                onChange={handleChange('legal_role')}
+                placeholder="CEO, Diretor, etc."
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">E-mail *</Label>
+              <Input
+                type="email"
+                value={formData.legal_email}
+                onChange={handleChange('legal_email')}
+                placeholder="representante@empresa.com"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">Telefone</Label>
+              <Input
+                value={formData.legal_phone}
+                onChange={handleChange('legal_phone')}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Actions */}
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => navigate('/clients')}>
