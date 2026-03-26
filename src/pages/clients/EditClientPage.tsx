@@ -127,6 +127,16 @@ export default function EditClientPage() {
       } as any);
 
       if (result) {
+        // Update legal representative
+        if (legalRepId) {
+          await updateLegalRepresentative(legalRepId, {
+            legal_name: formData.legal_name,
+            cpf: formData.legal_cpf,
+            role: formData.legal_role,
+            email: formData.legal_email,
+            phone: formData.legal_phone,
+          });
+        }
         toast.success('Cliente atualizado com sucesso!');
         navigate('/clients');
       }
