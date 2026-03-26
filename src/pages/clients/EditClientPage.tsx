@@ -35,7 +35,14 @@ export default function EditClientPage() {
     address_complement: '',
     issues_invoice: false,
     tax_regime: '',
+    legal_name: '',
+    legal_cpf: '',
+    legal_role: '',
+    legal_email: '',
+    legal_phone: '',
   });
+
+  const [legalRepId, setLegalRepId] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
