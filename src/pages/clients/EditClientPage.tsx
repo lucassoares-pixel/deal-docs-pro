@@ -50,6 +50,7 @@ export default function EditClientPage() {
     if (!clientsLoading && id) {
       const client = getClientById(id);
       if (client) {
+        const legalRep = getLegalRepByClientId(id);
         setFormData({
           company_name: client.company_name,
           trade_name: client.trade_name,
@@ -67,14 +68,20 @@ export default function EditClientPage() {
           address_state: client.address_state,
           address_zip: client.address_zip,
           address_complement: (client as any).address_complement || '',
+          legal_name: legalRep?.legal_name || '',
+          legal_cpf: legalRep?.cpf || '',
+          legal_role: legalRep?.role || '',
+          legal_email: legalRep?.email || '',
+          legal_phone: legalRep?.phone || '',
         });
+        if (legalRep) setLegalRepId(legalRep.id);
         setIsLoading(false);
       } else if (clients.length > 0) {
         toast.error('Cliente não encontrado');
         navigate('/clients');
       }
     }
-  }, [id, clients, clientsLoading, getClientById, navigate]);
+  }, [id, clients, legalRepresentatives, clientsLoading, getClientById, getLegalRepByClientId, navigate]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
