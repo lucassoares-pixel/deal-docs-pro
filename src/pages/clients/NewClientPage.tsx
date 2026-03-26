@@ -29,6 +29,7 @@ export default function NewClientPage() {
     address_city: '',
     address_state: '',
     address_zip: '',
+    address_complement: '',
     legal_name: '',
     legal_cpf: '',
     legal_role: '',
