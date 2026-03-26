@@ -166,6 +166,7 @@ export function useClients() {
     loading,
     addClient,
     addLegalRepresentative,
+    updateLegalRepresentative,
     updateClient,
     deleteClient,
     getClientById,
