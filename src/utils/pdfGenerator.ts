@@ -197,7 +197,8 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
   yPos += 4;
   doc.text(`CNPJ: ${contract.client.cnpj}`, 14, yPos);
   yPos += 4;
-  doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number} - ${contract.client.address_neighborhood}`, 14, yPos);
+  const complement1 = (contract.client as any).address_complement ? `, ${(contract.client as any).address_complement}` : '';
+  doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number}${complement1} - ${contract.client.address_neighborhood}`, 14, yPos);
   yPos += 4;
   doc.text(`${contract.client.address_city}/${contract.client.address_state} - CEP: ${contract.client.address_zip}`, 14, yPos);
   yPos += 4;
