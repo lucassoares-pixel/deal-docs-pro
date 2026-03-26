@@ -59,6 +59,7 @@ export default function EditClientPage() {
           address_city: client.address_city,
           address_state: client.address_state,
           address_zip: client.address_zip,
+          address_complement: (client as any).address_complement || '',
         });
         setIsLoading(false);
       } else if (clients.length > 0) {
