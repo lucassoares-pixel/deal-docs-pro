@@ -13,6 +13,7 @@ export interface Client {
   address_city: string;
   address_state: string;
   address_zip: string;
+  address_complement?: string | null;
   created_at: string;
   updated_at: string;
 }

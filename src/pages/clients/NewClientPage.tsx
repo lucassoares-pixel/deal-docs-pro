@@ -29,6 +29,7 @@ export default function NewClientPage() {
     address_city: '',
     address_state: '',
     address_zip: '',
+    address_complement: '',
     legal_name: '',
     legal_cpf: '',
     legal_role: '',
@@ -86,6 +87,7 @@ export default function NewClientPage() {
         address_city: formData.address_city,
         address_state: formData.address_state,
         address_zip: formData.address_zip,
+        address_complement: formData.address_complement || '',
         issues_invoice: formData.issues_invoice,
         tax_regime: formData.tax_regime || null,
       } as any);
@@ -279,6 +281,15 @@ export default function NewClientPage() {
                   value={formData.address_number}
                   onChange={handleChange('address_number')}
                   placeholder="123"
+                />
+              </div>
+
+              <div>
+                <Label className="form-label">Complemento</Label>
+                <Input
+                  value={formData.address_complement}
+                  onChange={handleChange('address_complement')}
+                  placeholder="Sala 101, Bloco A"
                 />
               </div>
 

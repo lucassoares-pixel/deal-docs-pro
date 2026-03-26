@@ -32,6 +32,7 @@ export default function EditClientPage() {
     address_city: '',
     address_state: '',
     address_zip: '',
+    address_complement: '',
     issues_invoice: false,
     tax_regime: '',
   });
@@ -58,6 +59,7 @@ export default function EditClientPage() {
           address_city: client.address_city,
           address_state: client.address_state,
           address_zip: client.address_zip,
+          address_complement: (client as any).address_complement || '',
         });
         setIsLoading(false);
       } else if (clients.length > 0) {
@@ -104,6 +106,7 @@ export default function EditClientPage() {
         address_city: formData.address_city,
         address_state: formData.address_state,
         address_zip: formData.address_zip,
+        address_complement: formData.address_complement || '',
         company_type: formData.company_type,
         issues_invoice: formData.issues_invoice,
         tax_regime: formData.tax_regime || null,
@@ -317,6 +320,15 @@ export default function EditClientPage() {
                   value={formData.address_number}
                   onChange={handleChange('address_number')}
                   placeholder="123"
+                />
+              </div>
+
+              <div>
+                <Label className="form-label">Complemento</Label>
+                <Input
+                  value={formData.address_complement}
+                  onChange={handleChange('address_complement')}
+                  placeholder="Sala 101, Bloco A"
                 />
               </div>
 
