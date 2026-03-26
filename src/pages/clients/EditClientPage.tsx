@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 export default function EditClientPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { clients, legalRepresentatives, loading: clientsLoading, updateClient, getClientById, getLegalRepByClientId } = useClients();
+  const { clients, legalRepresentatives, loading: clientsLoading, updateClient, updateLegalRepresentative, getClientById, getLegalRepByClientId } = useClients();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,7 +35,14 @@ export default function EditClientPage() {
     address_complement: '',
     issues_invoice: false,
     tax_regime: '',
+    legal_name: '',
+    legal_cpf: '',
+    legal_role: '',
+    legal_email: '',
+    legal_phone: '',
   });
+
+  const [legalRepId, setLegalRepId] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -43,6 +50,7 @@ export default function EditClientPage() {
     if (!clientsLoading && id) {
       const client = getClientById(id);
       if (client) {
+        const legalRep = getLegalRepByClientId(id);
         setFormData({
           company_name: client.company_name,
           trade_name: client.trade_name,
@@ -60,14 +68,20 @@ export default function EditClientPage() {
           address_state: client.address_state,
           address_zip: client.address_zip,
           address_complement: (client as any).address_complement || '',
+          legal_name: legalRep?.legal_name || '',
+          legal_cpf: legalRep?.cpf || '',
+          legal_role: legalRep?.role || '',
+          legal_email: legalRep?.email || '',
+          legal_phone: legalRep?.phone || '',
         });
+        if (legalRep) setLegalRepId(legalRep.id);
         setIsLoading(false);
       } else if (clients.length > 0) {
         toast.error('Cliente não encontrado');
         navigate('/clients');
       }
     }
-  }, [id, clients, clientsLoading, getClientById, navigate]);
+  }, [id, clients, legalRepresentatives, clientsLoading, getClientById, getLegalRepByClientId, navigate]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -113,6 +127,16 @@ export default function EditClientPage() {
       } as any);
 
       if (result) {
+        // Update legal representative
+        if (legalRepId) {
+          await updateLegalRepresentative(legalRepId, {
+            legal_name: formData.legal_name,
+            cpf: formData.legal_cpf,
+            role: formData.legal_role,
+            email: formData.legal_email,
+            phone: formData.legal_phone,
+          });
+        }
         toast.success('Cliente atualizado com sucesso!');
         navigate('/clients');
       }
@@ -371,6 +395,67 @@ export default function EditClientPage() {
                   className={errors.address_zip ? 'border-destructive' : ''}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Legal Representative */}
+        <div className="card-elevated p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+              <User className="w-5 h-5 text-accent" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Representante Legal</h2>
+              <p className="text-sm text-muted-foreground">Pessoa responsável pela assinatura do contrato</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="form-label">Nome Completo *</Label>
+              <Input
+                value={formData.legal_name}
+                onChange={handleChange('legal_name')}
+                placeholder="Nome do representante"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">CPF *</Label>
+              <Input
+                value={formData.legal_cpf}
+                onChange={handleChange('legal_cpf')}
+                placeholder="000.000.000-00"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">Cargo *</Label>
+              <Input
+                value={formData.legal_role}
+                onChange={handleChange('legal_role')}
+                placeholder="CEO, Diretor, etc."
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">E-mail *</Label>
+              <Input
+                type="email"
+                value={formData.legal_email}
+                onChange={handleChange('legal_email')}
+                placeholder="representante@empresa.com"
+              />
+            </div>
+
+            <div>
+              <Label className="form-label">Telefone</Label>
+              <Input
+                value={formData.legal_phone}
+                onChange={handleChange('legal_phone')}
+                placeholder="(00) 00000-0000"
+              />
             </div>
           </div>
         </div>

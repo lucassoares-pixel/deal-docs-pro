@@ -94,6 +94,27 @@ export function useClients() {
     return data;
   };
 
+  const updateLegalRepresentative = async (id: string, updates: Partial<LegalRepresentative>) => {
+    const { data, error } = await supabase
+      .from('legal_representatives')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: 'Erro ao atualizar representante legal',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    setLegalRepresentatives(legalRepresentatives.map(lr => lr.id === id ? data : lr));
+    return data;
+  };
+
   const updateClient = async (id: string, updates: Partial<Client>) => {
     const { data, error } = await supabase
       .from('clients')
@@ -145,6 +166,7 @@ export function useClients() {
     loading,
     addClient,
     addLegalRepresentative,
+    updateLegalRepresentative,
     updateClient,
     deleteClient,
     getClientById,
