@@ -509,7 +509,8 @@ export async function generateClientSheetPDF(contract: Contract, options: PdfOpt
   yPos += 5;
   doc.text(`Telefone: ${contract.client.phone}`, 20, yPos);
   yPos += 5;
-  doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number} - ${contract.client.address_neighborhood}`, 20, yPos);
+  const complement2 = (contract.client as any).address_complement ? `, ${(contract.client as any).address_complement}` : '';
+  doc.text(`Endereço: ${contract.client.address_street}, ${contract.client.address_number}${complement2} - ${contract.client.address_neighborhood}`, 20, yPos);
   yPos += 5;
   doc.text(`${contract.client.address_city}/${contract.client.address_state} - CEP: ${contract.client.address_zip}`, 20, yPos);
   yPos += 15;

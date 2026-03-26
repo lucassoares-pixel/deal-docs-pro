@@ -324,6 +324,15 @@ export default function EditClientPage() {
               </div>
 
               <div>
+                <Label className="form-label">Complemento</Label>
+                <Input
+                  value={formData.address_complement}
+                  onChange={handleChange('address_complement')}
+                  placeholder="Sala 101, Bloco A"
+                />
+              </div>
+
+              <div>
                 <Label className="form-label">Bairro</Label>
                 <Input
                   value={formData.address_neighborhood}

@@ -87,6 +87,7 @@ export default function NewClientPage() {
         address_city: formData.address_city,
         address_state: formData.address_state,
         address_zip: formData.address_zip,
+        address_complement: formData.address_complement || '',
         issues_invoice: formData.issues_invoice,
         tax_regime: formData.tax_regime || null,
       } as any);
