@@ -310,17 +310,8 @@ export async function generateContractPDF(contract: Contract, options: PdfOption
 
   yPos = (doc as any).lastAutoTable.finalY + 5;
 
-  // Condição especial de desconto (junto da tabela)
+  // Cláusula especial de desconto (sem a observação de cobrança)
   if (hasDiscount) {
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    const finalMonthlyValue = contract.recurring_total_discounted - (contract.extra_discount_value ?? 0);
-    const discountNote = `*FOI CONCEDIDO UM DESCONTO SOBRE O VALOR DA MENSALIDADE, QUE DEVERÁ TER A COBRANÇA DE ${formatCurrency(finalMonthlyValue)} NO CNPJ POR PERÍODO INDETERMINADO.`;
-    const discountNoteLines = doc.splitTextToSize(discountNote, pageWidth - 28);
-    doc.text(discountNoteLines, 14, yPos);
-    yPos += discountNoteLines.length * 3 + 5;
-
-    // Cláusula especial de desconto logo abaixo da OBS
     if (yPos > maxY - 40) {
       doc.addPage();
       yPos = addHeader(doc, logo, pageWidth);
