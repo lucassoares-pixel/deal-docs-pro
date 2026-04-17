@@ -536,25 +536,64 @@ export default function ContractBuilderPage() {
             <div className="space-y-4 max-w-md">
               <div>
                 <Label className="form-label">Cliente *</Label>
-                <Select value={selectedClientId} onValueChange={(val) => {
-                  setSelectedClientId(val);
-                  const c = clients.find(cl => cl.id === val);
-                  if (c) {
-                    setContractIssuesInvoice((c as any).issues_invoice ?? false);
-                    setContractTaxRegime((c as any).tax_regime || '');
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um cliente..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.trade_name} - {client.cnpj}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={clientPickerOpen} onOpenChange={setClientPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={clientPickerOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className={cn("truncate", !selectedClient && "text-muted-foreground")}>
+                        {selectedClient
+                          ? `${selectedClient.trade_name} - ${selectedClient.cnpj}`
+                          : 'Selecione um cliente...'}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+                        return 0;
+                      }}
+                    >
+                      <CommandInput placeholder="Buscar por nome, razão social ou CNPJ..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {clients.map(client => (
+                            <CommandItem
+                              key={client.id}
+                              value={`${client.trade_name} ${client.company_name} ${client.cnpj}`}
+                              onSelect={() => {
+                                setSelectedClientId(client.id);
+                                setContractIssuesInvoice((client as any).issues_invoice ?? false);
+                                setContractTaxRegime((client as any).tax_regime || '');
+                                setClientPickerOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  selectedClientId === client.id ? 'opacity-100' : 'opacity-0'
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{client.trade_name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {client.company_name} · {client.cnpj}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>
