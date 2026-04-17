@@ -25,9 +25,13 @@ import {
   Percent,
   DollarSign,
   Calendar,
-  Loader2
+  Loader2,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 type Step = 'client' | 'products' | 'review';
 type Product = Tables<'products'>;
