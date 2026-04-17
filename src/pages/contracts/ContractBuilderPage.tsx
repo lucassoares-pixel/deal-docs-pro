@@ -108,6 +108,7 @@ export default function ContractBuilderPage() {
   const [extraDiscountEndDate, setExtraDiscountEndDate] = useState<string>('');
   const [productSearch, setProductSearch] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
   const legalRep = legalRepresentatives.find(lr => lr.client_id === selectedClientId);
