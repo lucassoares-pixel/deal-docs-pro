@@ -404,13 +404,16 @@ export default function ReportsPage() {
 
   // Sales grouped by product
   const productSalesData = useMemo(() => {
+    if (!isAdmin) return [];
     const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
     type Row = { id: string; date: string; dateRaw: string; cnpj: string; company: string; quantity: number; recurring: number; full: number; seller: string };
     const groups = new Map<string, Row[]>();
+    const clientMap = new Map((clients || []).map(c => [c.id, c]));
+    const sellerMap = new Map(sellers.map(s => [s.id, s]));
 
     closedContracts.forEach(contract => {
-      const client = clients?.find(c => c.id === contract.client_id);
-      const seller = sellers.find(s => s.id === contract.seller_id);
+      const client = clientMap.get(contract.client_id);
+      const seller = sellerMap.get(contract.seller_id);
       contract.products?.forEach(cp => {
         const productName = cp.product?.name || 'N/A';
         const row: Row = {
