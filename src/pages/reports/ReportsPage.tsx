@@ -816,6 +816,7 @@ export default function ReportsPage() {
         </TabsContent>
 
         {/* Products Report */}
+        {isAdmin && (
         <TabsContent value="products" className="space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
