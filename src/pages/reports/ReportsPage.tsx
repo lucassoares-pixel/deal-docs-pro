@@ -812,6 +812,90 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
 
+        {/* Products Report */}
+        <TabsContent value="products" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Vendas por Produto</CardTitle>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  const flat = productSalesData.flatMap(g =>
+                    g.rows.map(r => ({
+                      produto: g.product,
+                      data: r.date,
+                      cnpj: r.cnpj,
+                      cliente: r.company,
+                      qtd: r.quantity,
+                      valor_mensal: r.recurring.toFixed(2),
+                      valor_cheio: r.full.toFixed(2),
+                      vendedor: r.seller,
+                    }))
+                  );
+                  if (flat.length > 0) exportToCSV(flat, 'vendas-por-produto');
+                }}
+              >
+                <Download className="w-4 h-4" />
+                Exportar CSV
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {productSalesData.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhuma venda no período</p>
+              ) : (
+                <div className="space-y-6">
+                  {productSalesData.map(group => (
+                    <div key={group.product} className="border rounded-lg overflow-hidden">
+                      <div className="bg-muted px-4 py-3 flex items-center justify-between">
+                        <h3 className="font-semibold">{group.product}</h3>
+                        <span className="text-sm text-muted-foreground">
+                          {group.rows.length} venda(s) • R$ {group.totalRecurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b bg-muted/30">
+                              <th className="text-left py-2 px-3 font-medium">Data</th>
+                              <th className="text-left py-2 px-3 font-medium">CNPJ</th>
+                              <th className="text-left py-2 px-3 font-medium">Cliente</th>
+                              <th className="text-center py-2 px-3 font-medium">Qtd</th>
+                              <th className="text-right py-2 px-3 font-medium">Valor Mensal</th>
+                              <th className="text-right py-2 px-3 font-medium">Valor Cheio</th>
+                              <th className="text-left py-2 px-3 font-medium">Vendedor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map(r => (
+                              <tr key={r.id} className="border-b hover:bg-muted/30">
+                                <td className="py-2 px-3">{r.date}</td>
+                                <td className="py-2 px-3">{r.cnpj}</td>
+                                <td className="py-2 px-3">{r.company}</td>
+                                <td className="py-2 px-3 text-center">{r.quantity}</td>
+                                <td className="py-2 px-3 text-right">R$ {r.recurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-2 px-3 text-right">R$ {r.full.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-2 px-3">{r.seller}</td>
+                              </tr>
+                            ))}
+                            <tr className="bg-muted/50 font-semibold">
+                              <td className="py-2 px-3" colSpan={3}>Subtotal</td>
+                              <td className="py-2 px-3 text-center">{group.totalQty}</td>
+                              <td className="py-2 px-3 text-right">R$ {group.totalRecurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                              <td className="py-2 px-3 text-right">R$ {group.totalFull.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                              <td></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Margin Report */}
         <TabsContent value="margin" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
