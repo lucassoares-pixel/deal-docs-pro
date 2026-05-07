@@ -459,7 +459,7 @@ export default function ReportsPage() {
         totalRecurring: rows.reduce((s, r) => s + r.recurring, 0),
         totalFull: rows.reduce((s, r) => s + r.full, 0),
       }));
-  }, [filteredContracts, filteredDirectSales, clients, sellers]);
+  }, [filteredContracts, filteredDirectSales, clients, sellers, isAdmin]);
 
   // Discount Data per Seller
   const discountData = useMemo(() => {
