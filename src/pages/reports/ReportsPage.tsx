@@ -433,7 +433,7 @@ export default function ReportsPage() {
     });
 
     filteredDirectSales.forEach(sale => {
-      const seller = sellers.find(s => s.id === sale.seller_id);
+      const seller = sale.seller_id ? sellerMap.get(sale.seller_id) : undefined;
       const row: Row = {
         id: sale.id,
         date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
