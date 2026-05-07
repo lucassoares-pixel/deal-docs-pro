@@ -402,6 +402,62 @@ export default function ReportsPage() {
     return { allRows, totalRevenue, totalCost, totalMargin, avgMarginPct };
   }, [filteredContracts, filteredDirectSales, clients, sellers]);
 
+  // Sales grouped by product
+  const productSalesData = useMemo(() => {
+    const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
+    type Row = { id: string; date: string; dateRaw: string; cnpj: string; company: string; quantity: number; recurring: number; full: number; seller: string };
+    const groups = new Map<string, Row[]>();
+
+    closedContracts.forEach(contract => {
+      const client = clients?.find(c => c.id === contract.client_id);
+      const seller = sellers.find(s => s.id === contract.seller_id);
+      contract.products?.forEach(cp => {
+        const productName = cp.product?.name || 'N/A';
+        const row: Row = {
+          id: `${contract.id}-${cp.product_id}`,
+          date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
+          dateRaw: contract.start_date,
+          cnpj: client?.cnpj || '',
+          company: client?.company_name || 'N/A',
+          quantity: cp.quantity || 1,
+          recurring: (cp.discounted_price || 0) * (cp.quantity || 1),
+          full: (cp.full_price || 0) * (cp.quantity || 1),
+          seller: seller?.name || 'N/A',
+        };
+        if (!groups.has(productName)) groups.set(productName, []);
+        groups.get(productName)!.push(row);
+      });
+    });
+
+    filteredDirectSales.forEach(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      const row: Row = {
+        id: sale.id,
+        date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+        dateRaw: sale.sale_date,
+        cnpj: '',
+        company: sale.company_name,
+        quantity: 1,
+        recurring: sale.recurring_value || 0,
+        full: sale.recurring_value || 0,
+        seller: seller?.name || 'N/A',
+      };
+      const key = '[Venda Direta]';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(row);
+    });
+
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([product, rows]) => ({
+        product,
+        rows: rows.sort((a, b) => b.dateRaw.localeCompare(a.dateRaw)),
+        totalQty: rows.reduce((s, r) => s + r.quantity, 0),
+        totalRecurring: rows.reduce((s, r) => s + r.recurring, 0),
+        totalFull: rows.reduce((s, r) => s + r.full, 0),
+      }));
+  }, [filteredContracts, filteredDirectSales, clients, sellers]);
+
   // Discount Data per Seller
   const discountData = useMemo(() => {
     const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
@@ -585,8 +641,9 @@ export default function ReportsPage() {
 
       {/* Reports Tabs */}
       <Tabs defaultValue="financial" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
           <TabsTrigger value="margin">Margem</TabsTrigger>
           <TabsTrigger value="discounts">Descontos</TabsTrigger>
           <TabsTrigger value="goals">Metas</TabsTrigger>
@@ -753,6 +810,90 @@ export default function ReportsPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Products Report */}
+        <TabsContent value="products" className="space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Vendas por Produto</CardTitle>
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  const flat = productSalesData.flatMap(g =>
+                    g.rows.map(r => ({
+                      produto: g.product,
+                      data: r.date,
+                      cnpj: r.cnpj,
+                      cliente: r.company,
+                      qtd: r.quantity,
+                      valor_mensal: r.recurring.toFixed(2),
+                      valor_cheio: r.full.toFixed(2),
+                      vendedor: r.seller,
+                    }))
+                  );
+                  if (flat.length > 0) exportToCSV(flat, 'vendas-por-produto');
+                }}
+              >
+                <Download className="w-4 h-4" />
+                Exportar CSV
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {productSalesData.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Nenhuma venda no período</p>
+              ) : (
+                <div className="space-y-6">
+                  {productSalesData.map(group => (
+                    <div key={group.product} className="border rounded-lg overflow-hidden">
+                      <div className="bg-muted px-4 py-3 flex items-center justify-between">
+                        <h3 className="font-semibold">{group.product}</h3>
+                        <span className="text-sm text-muted-foreground">
+                          {group.rows.length} venda(s) • R$ {group.totalRecurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b bg-muted/30">
+                              <th className="text-left py-2 px-3 font-medium">Data</th>
+                              <th className="text-left py-2 px-3 font-medium">CNPJ</th>
+                              <th className="text-left py-2 px-3 font-medium">Cliente</th>
+                              <th className="text-center py-2 px-3 font-medium">Qtd</th>
+                              <th className="text-right py-2 px-3 font-medium">Valor Mensal</th>
+                              <th className="text-right py-2 px-3 font-medium">Valor Cheio</th>
+                              <th className="text-left py-2 px-3 font-medium">Vendedor</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map(r => (
+                              <tr key={r.id} className="border-b hover:bg-muted/30">
+                                <td className="py-2 px-3">{r.date}</td>
+                                <td className="py-2 px-3">{r.cnpj}</td>
+                                <td className="py-2 px-3">{r.company}</td>
+                                <td className="py-2 px-3 text-center">{r.quantity}</td>
+                                <td className="py-2 px-3 text-right">R$ {r.recurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-2 px-3 text-right">R$ {r.full.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-2 px-3">{r.seller}</td>
+                              </tr>
+                            ))}
+                            <tr className="bg-muted/50 font-semibold">
+                              <td className="py-2 px-3" colSpan={3}>Subtotal</td>
+                              <td className="py-2 px-3 text-center">{group.totalQty}</td>
+                              <td className="py-2 px-3 text-right">R$ {group.totalRecurring.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                              <td className="py-2 px-3 text-right">R$ {group.totalFull.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                              <td></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Margin Report */}
