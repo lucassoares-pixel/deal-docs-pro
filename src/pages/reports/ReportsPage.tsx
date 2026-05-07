@@ -402,6 +402,62 @@ export default function ReportsPage() {
     return { allRows, totalRevenue, totalCost, totalMargin, avgMarginPct };
   }, [filteredContracts, filteredDirectSales, clients, sellers]);
 
+  // Sales grouped by product
+  const productSalesData = useMemo(() => {
+    const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
+    type Row = { id: string; date: string; dateRaw: string; cnpj: string; company: string; quantity: number; recurring: number; full: number; seller: string };
+    const groups = new Map<string, Row[]>();
+
+    closedContracts.forEach(contract => {
+      const client = clients?.find(c => c.id === contract.client_id);
+      const seller = sellers.find(s => s.id === contract.seller_id);
+      contract.products?.forEach(cp => {
+        const productName = cp.product?.name || 'N/A';
+        const row: Row = {
+          id: `${contract.id}-${cp.product_id}`,
+          date: format(new Date(contract.start_date), 'dd/MM/yyyy'),
+          dateRaw: contract.start_date,
+          cnpj: client?.cnpj || '',
+          company: client?.company_name || 'N/A',
+          quantity: cp.quantity || 1,
+          recurring: (cp.discounted_price || 0) * (cp.quantity || 1),
+          full: (cp.full_price || 0) * (cp.quantity || 1),
+          seller: seller?.name || 'N/A',
+        };
+        if (!groups.has(productName)) groups.set(productName, []);
+        groups.get(productName)!.push(row);
+      });
+    });
+
+    filteredDirectSales.forEach(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      const row: Row = {
+        id: sale.id,
+        date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
+        dateRaw: sale.sale_date,
+        cnpj: '',
+        company: sale.company_name,
+        quantity: 1,
+        recurring: sale.recurring_value || 0,
+        full: sale.recurring_value || 0,
+        seller: seller?.name || 'N/A',
+      };
+      const key = '[Venda Direta]';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(row);
+    });
+
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([product, rows]) => ({
+        product,
+        rows: rows.sort((a, b) => b.dateRaw.localeCompare(a.dateRaw)),
+        totalQty: rows.reduce((s, r) => s + r.quantity, 0),
+        totalRecurring: rows.reduce((s, r) => s + r.recurring, 0),
+        totalFull: rows.reduce((s, r) => s + r.full, 0),
+      }));
+  }, [filteredContracts, filteredDirectSales, clients, sellers]);
+
   // Discount Data per Seller
   const discountData = useMemo(() => {
     const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
