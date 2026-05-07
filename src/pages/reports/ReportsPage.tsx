@@ -404,13 +404,16 @@ export default function ReportsPage() {
 
   // Sales grouped by product
   const productSalesData = useMemo(() => {
+    if (!isAdmin) return [];
     const closedContracts = filteredContracts.filter(c => c.sales_status === 'concluido');
     type Row = { id: string; date: string; dateRaw: string; cnpj: string; company: string; quantity: number; recurring: number; full: number; seller: string };
     const groups = new Map<string, Row[]>();
+    const clientMap = new Map((clients || []).map(c => [c.id, c]));
+    const sellerMap = new Map(sellers.map(s => [s.id, s]));
 
     closedContracts.forEach(contract => {
-      const client = clients?.find(c => c.id === contract.client_id);
-      const seller = sellers.find(s => s.id === contract.seller_id);
+      const client = clientMap.get(contract.client_id);
+      const seller = sellerMap.get(contract.seller_id);
       contract.products?.forEach(cp => {
         const productName = cp.product?.name || 'N/A';
         const row: Row = {
@@ -430,7 +433,7 @@ export default function ReportsPage() {
     });
 
     filteredDirectSales.forEach(sale => {
-      const seller = sellers.find(s => s.id === sale.seller_id);
+      const seller = sale.seller_id ? sellerMap.get(sale.seller_id) : undefined;
       const row: Row = {
         id: sale.id,
         date: format(new Date(sale.sale_date), 'dd/MM/yyyy'),
@@ -456,7 +459,7 @@ export default function ReportsPage() {
         totalRecurring: rows.reduce((s, r) => s + r.recurring, 0),
         totalFull: rows.reduce((s, r) => s + r.full, 0),
       }));
-  }, [filteredContracts, filteredDirectSales, clients, sellers]);
+  }, [filteredContracts, filteredDirectSales, clients, sellers, isAdmin]);
 
   // Discount Data per Seller
   const discountData = useMemo(() => {
@@ -641,9 +644,9 @@ export default function ReportsPage() {
 
       {/* Reports Tabs */}
       <Tabs defaultValue="financial" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-6' : 'grid-cols-5'}`}>
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
-          <TabsTrigger value="products">Produtos</TabsTrigger>
+          {isAdmin && <TabsTrigger value="products">Produtos</TabsTrigger>}
           <TabsTrigger value="margin">Margem</TabsTrigger>
           <TabsTrigger value="discounts">Descontos</TabsTrigger>
           <TabsTrigger value="goals">Metas</TabsTrigger>
@@ -813,6 +816,7 @@ export default function ReportsPage() {
         </TabsContent>
 
         {/* Products Report */}
+        {isAdmin && (
         <TabsContent value="products" className="space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -895,6 +899,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* Margin Report */}
         <TabsContent value="margin" className="space-y-6">
