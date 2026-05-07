@@ -899,6 +899,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* Margin Report */}
         <TabsContent value="margin" className="space-y-6">
